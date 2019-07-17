@@ -1,0 +1,84 @@
+_RETURN_
+_STACK_
+CCP_1_ASEVT
+CCP_1_TRCLR
+CCP_1_TRSET
+CCP_1_SSDG
+CCP_2_ASEVT
+CCP_2_TRCLR
+CCP_2_TRSET
+CCP_2_SSDG
+CCP_3_ASEVT
+CCP_3_TRCLR
+CCP_3_TRSET
+CCP_3_SSDG
+CCP_4_ASEVT
+CCP_4_TRCLR
+CCP_4_TRSET
+CCP_4_SSDG
+CCP_5_ASEVT
+CCP_5_TRCLR
+CCP_5_TRSET
+CCP_5_SSDG
+C1OUT
+C1ENV
+C2OUT
+C2ENV
+C3OUT
+C3ENV
+LC1OUT
+LC2OUT
+LC3OUT
+LC4OUT
+currState
+queue
+front
+back
+bootFinished
+SCANCODE_DELAY_PASSED
+bit_index
+parity
+tx_data
+doneTx
+currClkState
+currDataState
+portInput
+lastPortState
+portChange
+
+Project Directory:
+    C:\Users\chrsb\MPLABXProjects\ps2mini.X\
+
+Project Files:
+    main.c                                                  [21-Jun-19 17:13  CRC=F33EA381]
+    device.h                                                [21-Jun-19 16:55  CRC=54A57129]
+    ..\..\..\..\Program Files (x86)\PICC\devices\33CK64MP105.h [06-Apr-19 10:13  CRC=772DA19E]
+    configuration.h                                         [21-Jun-19 17:05  CRC=96EA63CC]
+    ps2_protocol.h                                          [20-Jun-19 18:04  CRC=21427C5C]
+
+Source signature=988112CC
+
+Units:
+    C:\Users\chrsb\MPLABXProjects\ps2mini.X\main
+
+Compiler Settings:
+    Processor:      DSPIC33CK64MP105
+    Pointer Size:   16
+    ADC Range:      0-65535
+    Opt Level:      9
+    Short,Int,Long: SIGNED: 8,16,32
+    Float,Double:   32,64
+    Output file:    Relocatable
+    Compile Mode:       CCS5
+    Predefined symbols:
+       #define __dsPIC33CK64MP105__ 1
+
+Compiler operating in Evaluation Mode
+To obtain a fully enabled compiler visit www.ccsinfo.com/products
+
+Output Files:
+    XREF file:   build\default\production\main.xsym
+    Errors:      build\default\production\main.err
+    Ext Symbols: build\default\production\main.esym
+    Object:      build\default\production\main.o
+    Symbols:     build\default\production\main.osym

@@ -1,0 +1,8 @@
+Compiling C:\Users\chrsb\MPLABXProjects\ps2mini.X\main on 09-Jul-19 at 21:58
+C:\Users\chrsb\MPLABXProjects\ps2mini.X\main.c:161:1:  Warning#203  Condition always TRUE
+C:\Users\chrsb\MPLABXProjects\ps2mini.X\main.c:711:1:  Warning#216  Interrupts disabled during call to prevent re-entrancy:  (push)
+C:\Users\chrsb\MPLABXProjects\ps2mini.X\main.c:159:9:  Warning#202  Variable never used:   counter
+C:\Users\chrsb\MPLABXProjects\ps2mini.X\main.c:272:9:  Warning#202  Variable never used:   rx_data
+      Memory usage:   ROM=4%      RAM=4% - 5%
+      0 Errors,  4 Warnings.
+Build Successful.

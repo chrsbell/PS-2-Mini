@@ -1,0 +1,148 @@
+W0      @SCRATCH
+W0L     _RETURN_
+W0 -W1  @READ_ROM_MEMORY.P1
+W0      @WRITEBITA.P2
+W0 -W1  @DIV3232B.P3
+W0      @delay_ms1.P4
+W0      @delay_us1.P5
+W1      @SCRATCH
+W1      @READ_PACKED_MEMORY.P1
+W1      @WRITEBITA.P2
+W1      @WRITE_PACKED_MEMORY.P3
+W2 -W3  @DIV3232B.P1
+W2      @WRITE_PACKED_MEMORY.P2
+W2      @READ_ROM_MEMORY.P3
+W2      @READ_PACKED_MEMORY.P4
+W2      @WRITEBITA.P5
+W3      @READ_PACKED_MEMORY.P1
+W3      @WRITE_PACKED_MEMORY.P2
+W3      @READ_ROM_MEMORY.P3
+0C0.6   LC1OUT
+0CC.6   LC2OUT
+0D8.6   LC3OUT
+0E4.6   LC4OUT
+955.4   CCP_1_SSDG
+95C.4   CCP_1_ASEVT
+95C.5   CCP_1_TRCLR
+95C.6   CCP_1_TRSET
+979.4   CCP_2_SSDG
+980.4   CCP_2_ASEVT
+980.5   CCP_2_TRCLR
+980.6   CCP_2_TRSET
+99D.4   CCP_3_SSDG
+9A4.4   CCP_3_ASEVT
+9A4.5   CCP_3_TRCLR
+9A4.6   CCP_3_TRSET
+9C1.4   CCP_4_SSDG
+9C8.4   CCP_4_ASEVT
+9C8.5   CCP_4_TRCLR
+9C8.6   CCP_4_TRSET
+9E5.4   CCP_5_SSDG
+9EC.4   CCP_5_ASEVT
+9EC.5   CCP_5_TRCLR
+9EC.6   CCP_5_TRSET
+C89.0   C1OUT
+C89.1   C1ENV
+C99.0   C2OUT
+C99.1   C2ENV
+CA9.0   C3OUT
+CA9.1   C3ENV
+105A-105B currState
+105C-137B queue
+137C-137D front
+137E-137F back
+1380.0  bootFinished
+1380.1  doneTx
+1381    tx_data
+1382-1383 bit_index
+1384-1385 parity
+1386-138D edge
+138E-138F currClkState
+1390-1391 currDataState
+1392-1393 portInput
+1394-1395 lastPortState
+1396-1397 portChange
+1398    MAIN.command
+139A-139B MAIN.packet
+139C-139D MAIN.counter
+139E-13A1 MAIN.s
+13A2    execute_host_command.commandcode
+13A4-13A7 execute_host_command.s
+13A6-13A9 send_to_host.packet
+13A8    receive_from_host.commandcode
+13AA-13AB receive_from_host.i
+13AC-13BF receive_from_host.rx_data
+13C4-13C7 ext3_isr.s
+13C4-13C7 ext0_isr.s
+13C4-13C5 timer1_isr.currBit
+13C4-13C7 ext2_isr.s
+13C4-13C7 ext1_isr.s
+13C8-13CB push.data
+2F70-2FFF _STACK_
+
+ROM Allocation:
+000200  timer1_isr
+0002B6  push
+0002D8  ext0_isr
+000342  ext1_isr
+0003AC  ext2_isr
+000416  ext3_isr
+000480  initialize_interrupts
+00049C  initialize
+0004B4  device_communication_inhibited
+0004D0  is_host_requesting_to_send
+0004EC  @WRITEBITA
+0004FE  receive_from_host
+000566  execute_host_command
+000594  pop
+0005BC  @delay_us1
+0005CC  send_to_host
+0005FC  MAIN
+0005FC  @cinit1
+00063E  @cinit2
+
+Project Directory:
+    C:\Users\chrsb\MPLABXProjects\ps2mini.X\
+
+Project Files:
+    main.c                                                  [22-Jun-19 17:03  CRC=43397225]
+    device.h                                                [22-Jun-19 16:35  CRC=5A269807]
+    ..\..\..\..\Program Files (x86)\PICC\devices\33CK64MP105.h [06-Apr-19 10:13  CRC=772DA19E]
+    configuration.h                                         [21-Jun-19 20:30  CRC=0332765C]
+    ps2_protocol.h                                          [20-Jun-19 18:04  CRC=21427C5C]
+
+Source signature=5A451ADE
+Program memory checksum=0000
+Program memory CRC=0000
+Hex file CRC=6F11
+
+Units:
+    C:\Users\chrsb\MPLABXProjects\ps2mini.X\main (main)
+
+Compiler Settings:
+    Processor:      DSPIC33CK64MP105
+    Pointer Size:   16
+    ADC Range:      0-65535
+    Opt Level:      9
+    Short,Int,Long: SIGNED: 8,16,32
+    Float,Double:   32,64
+    ICD Provisions: Yes
+    Compile Mode:       CCS5
+    Predefined symbols:
+       #define __DEBUG 1
+       #define __dsPIC33CK64MP105__ 1
+
+Compiler operating in Evaluation Mode
+To obtain a fully enabled compiler visit www.ccsinfo.com/products
+
+Output Files:
+    XREF file:   build\default\debug\main.xsym
+    Errors:      build\default\debug\main.err
+    Ext Symbols: build\default\debug\main.esym
+    INHX8:       build\default\debug\main.hex
+    Symbols:     build\default\debug\main.sym
+    List:        build\default\debug\main.lst
+    Debug/COFF:  build\default\debug\main.cof
+    Project:     main.ccspjt
+    Call Tree:   build\default\debug\main.tre
+    Statistics:  build\default\debug\main.STA

@@ -1,0 +1,72 @@
+_RETURN_
+_STACK_
+CCP_1_ASEVT
+CCP_1_TRCLR
+CCP_1_TRSET
+CCP_1_SSDG
+CCP_2_ASEVT
+CCP_2_TRCLR
+CCP_2_TRSET
+CCP_2_SSDG
+CCP_3_ASEVT
+CCP_3_TRCLR
+CCP_3_TRSET
+CCP_3_SSDG
+CCP_4_ASEVT
+CCP_4_TRCLR
+CCP_4_TRSET
+CCP_4_SSDG
+CCP_5_ASEVT
+CCP_5_TRCLR
+CCP_5_TRSET
+CCP_5_SSDG
+C1OUT
+C1ENV
+C2OUT
+C2ENV
+C3OUT
+C3ENV
+LC1OUT
+LC2OUT
+LC3OUT
+LC4OUT
+_Randseed
+
+Project Directory:
+    C:\Users\chrsb\MPLABXProjects\ps2mini.X\
+
+Project Files:
+    newmain.c                                               [21-Jun-19 16:52  CRC=C451E437]
+    ..\..\..\..\Program Files (x86)\PICC\devices\33CK64MP105.h [06-Apr-19 10:13  CRC=772DA19E]
+    ..\..\..\..\Program Files (x86)\PICC\drivers\stdio.h    [31-Jul-07 15:24  CRC=4E4534F4]
+    ..\..\..\..\Program Files (x86)\PICC\drivers\string.h   [28-Mar-19 21:10  CRC=559408B4]
+    ..\..\..\..\Program Files (x86)\PICC\drivers\stddef.h   [30-Jan-19 12:26  CRC=897CEC6C]
+    ..\..\..\..\Program Files (x86)\PICC\drivers\ctype.h    [03-Jan-08 15:55  CRC=2D1F019F]
+    ..\..\..\..\Program Files (x86)\PICC\drivers\stdlib.h   [29-Mar-19 13:31  CRC=99D16202]
+
+Source signature=C997758C
+
+Units:
+    C:\Users\chrsb\MPLABXProjects\ps2mini.X\newmain
+
+Compiler Settings:
+    Processor:      DSPIC33CK64MP105
+    Pointer Size:   16
+    ADC Range:      0-65535
+    Opt Level:      9
+    Short,Int,Long: SIGNED: 8,16,32
+    Float,Double:   32,64
+    Output file:    Relocatable
+    Compile Mode:       CCS5
+    Predefined symbols:
+       #define __dsPIC33CK64MP105__ 1
+
+Compiler operating in Evaluation Mode
+To obtain a fully enabled compiler visit www.ccsinfo.com/products
+
+Output Files:
+    XREF file:   build\default\production\newmain.xsym
+    Errors:      build\default\production\newmain.err
+    Ext Symbols: build\default\production\newmain.esym
+    Object:      build\default\production\newmain.o
+    Symbols:     build\default\production\newmain.osym

@@ -1,0 +1,64 @@
+
+ROM used:   1938/44800 (4%)
+            1938/44800 (4%) including unused fragments
+
+            0.6 Average locations per line
+            7.1 Average locations per statement
+
+RAM used:   368/8192 (4%) at main() level
+            410/8192 (5%) worst case
+
+Stack used: 50 worst case (8 in main + 42 for interrupts)
+Stack size: 128
+
+Lines Stmts  %   Files
+----- ----- ---  -----
+  714   272 100  main.c
+   44     0   0  device.h
+ 2222     0   0  ..\..\..\..\Program Files (x86)\PICC\devices\33CK64MP105.h
+   62     0   0  configuration.h
+   92     0   0  ps2_protocol.h
+----- -----
+ 3134   272 Total
+
+Page ROM  %  RAM    Vol Diff  Functions:
+---- --- --- ---    --- ----  ----------
+0     16   0    0             @delay_us1
+0     34   1    4     79  2.9  push
+0     40   1    0    116  4.5  pop
+0     18   0    0    197  1.8  initialize
+0    410  11   10   1186  8.2  MAIN
+0     28   1    0     66  2.3  device_communication_inhibited
+0     28   1    0     66  2.3  is_host_requesting_to_send
+0    104   3   24    806  7.4  receive_from_host
+0     18   0    4             @WRITEBITA
+0     46   1    6    179  3.1  execute_host_command
+0     50   1    4    372  3.8  send_to_host
+0     28   1    0    267  2.3  initialize_interrupts
+0    182   5    2    959  7.7  timer1_isr
+0    106   3    4    479  4.8  ext0_isr
+0    106   3    4    479  4.8  ext1_isr
+0    106   3    4    479  4.8  ext2_isr
+0    106   3    4    479  4.8  ext3_isr
+ Inline         0             @cinit1
+
+Program metrics:
+    Functions               15
+    Statements              272
+    Comments                896
+    Volume (V)              10129
+    Difficulty (D)          66.5
+    Effort to implement (E) 673100
+    Time to implement (T)   10 hours, 23 minutes
+    Est Delivered Bugs (B)  3
+    Cyclomatic Complexity   35
+    Maintainability (MI)    62
+
+ Segment     Used  Free
+-----------  ----  ----
+00000-00002     4  0  
+00004-001FE   508  0  
+00200-0AEFE  1426  42862  
+
+
+

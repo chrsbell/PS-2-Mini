@@ -1,0 +1,1682 @@
+CCS PCD C Compiler, Version 5.084d, 1               22-Jun-19 17:17
+Compiler operating in Evaluation Mode
+To obtain a fully enabled compiler visit www.ccsinfo.com/products
+
+               Filename:   C:\Users\chrsb\MPLABXProjects\ps2mini.X\build\default\debug\main.lst
+
+               ROM used:   1942 bytes (4%)
+                           Largest free fragment is 42858
+               RAM used:   984 (12%) at main() level
+                           1026 (13%) worst case
+               Stack used: 50 locations (8 in main + 42 for interrupts)
+               Stack size: 144
+
+*
+0000:  GOTO    5FC
+*
+0014:  DATA    D8,02,00
+0016:  DATA    00,02,00
+*
+0032:  DATA    42,03,00
+*
+003C:  DATA    AC,03,00
+*
+0048:  DATA    16,04,00
+.................... /* 
+....................  *                      PS/2 Low Latency osu! Keyboard 
+....................  *   
+....................  *  Copyright (C) 2019  Chris Bell, https://creationsofchris.wordpress.com/ 
+....................  * 
+....................  *  Code modified from David Bern's PS/2 Keyer 
+....................  * 
+....................  *  This program is free software; you can redistribute it and/or modify 
+....................  *  it under the terms of the GNU General Public License as published by 
+....................  *  the Free Software Foundation; either version 2 of the License, or 
+....................  *  (at your option) any later version. 
+....................  * 
+....................  *  This program is distributed in the hope that it will be useful, 
+....................  *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+....................  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+....................  *  GNU General Public License for more details. 
+....................  * 
+....................  *  You should have received a copy of the GNU General Public License along 
+....................  *  with this program; if not, write to the Free Software Foundation, Inc., 
+....................  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. 
+....................  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
+....................  *  USA, or see <http://www.gnu.org/licenses/>. 
+....................  */ 
+....................  
+.................... #include "device.h" 
+.................... /* 
+....................  *                      PS/2 Low Latency osu! Keyboard 
+....................  *   
+....................  *  Copyright (C) 2019  Chris Bell, https://creationsofchris.wordpress.com/ 
+....................  * 
+....................  *  Code modified from David Bern's PS/2 Keyer 
+....................  * 
+....................  *  This program is free software; you can redistribute it and/or modify 
+....................  *  it under the terms of the GNU General Public License as published by 
+....................  *  the Free Software Foundation; either version 2 of the License, or 
+....................  *  (at your option) any later version. 
+....................  * 
+....................  *  This program is distributed in the hope that it will be useful, 
+....................  *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+....................  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+....................  *  GNU General Public License for more details. 
+....................  * 
+....................  *  You should have received a copy of the GNU General Public License along 
+....................  *  with this program; if not, write to the Free Software Foundation, Inc., 
+....................  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. 
+....................  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
+....................  *  USA, or see <http://www.gnu.org/licenses/>. 
+....................  */ 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... //device configuration and fuses 
+....................  
+.................... #include <33CK64MP105.h> 
+.................... //////////// Standard Header file for the DSPIC33CK64MP105 device //////////////// 
+.................... /////////////////////////////////////////////////////////////////////////// 
+.................... ////        (C) Copyright 1996, 2014 Custom Computer Services          //// 
+.................... //// This source code may only be used by licensed users of the CCS C  //// 
+.................... //// compiler.  This source code may only be distributed to other      //// 
+.................... //// licensed users of the CCS C compiler.  No other use, reproduction //// 
+.................... //// or distribution is permitted without written permission.          //// 
+.................... //// Derivative programs created using this software in object code    //// 
+.................... //// form are not restricted in any way.                               //// 
+.................... /////////////////////////////////////////////////////////////////////////// 
+.................... #device DSPIC33CK64MP105 
+*
+04EC:  AND     W0,#7,W3
+04EE:  LSR     W0,#3,W0
+04F0:  ADD     W0,W2,W0
+04F2:  BTSC    W0.0
+04F4:  ADD     W3,#8,W3
+04F6:  BCLR    W0.0
+04F8:  CP0.B   W1L
+04FA:  BSW.Z   [W0].W3
+04FC:  RETURN  
+....................  
+.................... #list 
+....................  
+.................... //#device ICD=TRUE 
+.................... //#device NESTED_INTERRUPTS=TRUE 
+.................... #pin_select INT1 = PIN_B3//KEY_SWITCH2 
+.................... #pin_select INT2 = PIN_B4//KEY_SWITCH3 
+.................... #pin_select INT3 = PIN_B5//KEY_SWITCH4 
+.................... #fuses EC,NOWDT,NOPROTECT,PR 
+.................... #use delay(clock=100MHZ) 
+*
+05BC:  CP0     W0
+05BE:  BTSC.B  42.1
+05C0:  BRA     5CA
+05C2:  REPEAT  #2D
+05C4:  NOP     
+05C6:  DEC     W0,W0
+05C8:  BRA     NZ,5C2
+05CA:  RETURN  
+.................... #use fast_io(B) //manually control i/o direction register 
+.................... //#pin_select U1TX=PIN_B2 
+.................... //#pin_select U1RX=PIN_B3 
+.................... //#use rs232(UART1, baud=9600, errors, bits=8, parity=N, stop=1, stream=COM4) 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+....................  
+.................... #include "configuration.h" 
+.................... /* 
+....................  *                      PS/2 Low Latency osu! Keyboard 
+....................  *   
+....................  *  Copyright (C) 2019  Chris Bell, https://creationsofchris.wordpress.com/ 
+....................  * 
+....................  *  Code modified from David Bern's PS/2 Keyer 
+....................  * 
+....................  *  This program is free software; you can redistribute it and/or modify 
+....................  *  it under the terms of the GNU General Public License as published by 
+....................  *  the Free Software Foundation; either version 2 of the License, or 
+....................  *  (at your option) any later version. 
+....................  * 
+....................  *  This program is distributed in the hope that it will be useful, 
+....................  *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+....................  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+....................  *  GNU General Public License for more details. 
+....................  * 
+....................  *  You should have received a copy of the GNU General Public License along 
+....................  *  with this program; if not, write to the Free Software Foundation, Inc., 
+....................  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. 
+....................  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
+....................  *  USA, or see <http://www.gnu.org/licenses/>. 
+....................  */ 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... //#define DEBUG 
+.................... //#define ERROR_LED	PIN_B12 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... 		/* PS/2 port definitions */ 
+....................  
+.................... #define keyboard_host_clock		PIN_B11	 
+.................... #define keyboard_host_data		PIN_B12 
+.................... #define keyboard_host_led		PIN_A0 
+....................  
+.................... #define CLOCK_PERIOD 10 //in microseconds, PS/2 clock period is ~30-50 microseconds 
+.................... #define CLOCK_PERIOD_HALF 5 
+....................  
+.................... #define TIMER_CLOCKP_START 65035//65335//65035//65535-(CLOCK_PERIOD/(2/OSC_FREQ)) //triggers every clock period (20 us) 
+.................... #define TIMER_CLOCKP_H_START 65285//65435//65285//65535-(CLOCK_PERIOD_HALF/(2/OSC_FREQ)) //triggers every half a clock period (10 us) 
+....................  
+.................... #define TIMER1_START 63035 //65535-(.00005/(2/OSC_FREQ)) 
+.................... #define DEBOUNCE_DELAY 50 //in microseconds, external circuit can debounce in ~1 microsecond 
+.................... #define RESET_DELAY 100 //in microseconds 
+.................... #define ACK_DELAY 1000 //in microseconds 
+.................... #define SCANCODE_DELAY 150 //in microseconds, needed for PC to recognize scancodes very close to each other 
+....................                            //common when playing rhythm games 
+.................... //#define TIMER3_START 65534//61935 //65535-(SCANCODE_DELAY/(2/OSC_FREQ)) 
+.................... #define TIMER2_PERIOD 48828 //OverflowTime / (2 * (1/OscFrequency) * Prescale) = Period 
+.................... #define TIMER2_INCR 250 //overflow time, in milliseconds 
+.................... #define BOOT_TIME 30000 //in milliseconds 
+....................  
+.................... #define QUEUE_SIZE 200 //max number of scancodes to queue 
+....................  
+.................... #define KEY_SWITCH1 PIN_B2 //EXT interrupt 0 on PIN_B7 is unchangeable, don't change this unless 
+....................                            //you're using a different chip 
+.................... #define KEY_SWITCH2 PIN_B3 //EXT interrupt 1 
+.................... #define KEY_SWITCH3 PIN_B4 //EXT interrupt 2 
+.................... #define KEY_SWITCH4 PIN_B5 //EXT interrupt 3 
+....................  
+.................... #include "ps2_protocol.h" 
+.................... /* 
+....................  *                      PS/2 Low Latency osu! Keyboard 
+....................  *   
+....................  *  Copyright (C) 2019  Chris Bell, https://creationsofchris.wordpress.com/ 
+....................  * 
+....................  *  Code modified from David Bern's PS/2 Keyer 
+....................  * 
+....................  *  This program is free software; you can redistribute it and/or modify 
+....................  *  it under the terms of the GNU General Public License as published by 
+....................  *  the Free Software Foundation; either version 2 of the License, or 
+....................  *  (at your option) any later version. 
+....................  * 
+....................  *  This program is distributed in the hope that it will be useful, 
+....................  *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+....................  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+....................  *  GNU General Public License for more details. 
+....................  * 
+....................  *  You should have received a copy of the GNU General Public License along 
+....................  *  with this program; if not, write to the Free Software Foundation, Inc., 
+....................  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. 
+....................  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
+....................  *  USA, or see <http://www.gnu.org/licenses/>. 
+....................  */ 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... enum { 
+.................... 	LOW, 
+.................... 	HIGH, 
+....................     FLOATING, 
+.................... }; 
+....................  
+.................... enum {		/* keyboard host command codes */ 
+.................... 	KEYBOARD_RESET				= 0xFF, 
+.................... 	KEYBOARD_RESEND				= 0xFE,	 
+....................     KEYBOARD_DISABLE            = 0xF5, 
+....................     KEYBOARD_ENABLE             = 0xF4, 
+....................      
+.................... 	READ_ID_CMD					= 0xF2, 
+....................  
+.................... 	SET_TYPEMATIC_CMD			= 0xF3, 
+.................... 		TYPEMATIC_VALUE1		= 0x00, 
+.................... 		TYPEMATIC_VALUE2		= 0x20, 
+....................  
+.................... 	SET_DEFAULT_CMD				= 0xF6, 
+....................  
+.................... 	SET_LED_CMD 				= 0xED, 
+.................... 		CAPS_LOCK_LED	 		= 0x04, 
+.................... 		NUM_LOCK_LED			= 0x02, 
+.................... 		SCROLL_LOCK_LED			= 0x01, 
+.................... 		CLEAR_LEDS				= 0x00, 
+.................... }; 
+....................  
+.................... enum {		/* keyboard device response codes */ 
+.................... 	KEYBOARD_BAT			= 0xAA, 
+.................... 	KEYBOARD_ACK			= 0xFA, 
+.................... 	KEYBOARD_ID_1			= 0xAB, 
+.................... 	KEYBOARD_ID_2		    = 0x83, 
+.................... }; 
+....................  
+.................... enum {		/* keyboard device scan codes */ 
+....................     	BREAK_CODE			= 0xF0, 
+....................         KEY_A               = 0x1C, 
+....................         KEY_B               = 0x32, 
+....................         KEY_C               = 0x21, 
+....................         KEY_D               = 0x23, 
+.................... }; 
+....................  
+.................... typedef struct KEY { 
+....................   BYTE scancode; 
+....................   BOOLEAN isRelease; 
+.................... } KEY; 
+....................  
+.................... typedef struct SCANCODE{ 
+....................     BYTE scancode; 
+....................     int delay; 
+.................... } SCANCODE; 
+....................  
+.................... BOOLEAN is_host_requesting_to_send(void); 
+....................  
+.................... BOOLEAN device_communication_inhibited(void); 
+....................  
+.................... BYTE execute_host_command(void); 
+....................  
+.................... BYTE receive_from_host(void); 
+....................  
+.................... void send_to_host(SCANCODE packet); 
+....................  
+.................... //void send_key(KEY* key); 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+....................  
+.................... /******************************************************************************/ 
+.................... /*																			  */ 
+.................... /*		This is the firmware for a 4-key PS/2 keyboard                        */ 
+.................... /*      using a very low amount of latency, specifically                      */ 
+.................... /*		for use with osu!catch. Reference attached schematic.                 */ 
+.................... /*																			  */ 
+.................... /******************************************************************************/ 
+....................  
+.................... static void initialize(void); 
+....................  
+.................... static void initialize_interrupts(void); 
+....................  
+.................... static void update_switches(void); 
+....................  
+.................... static void push(SCANCODE data); 
+....................  
+.................... static SCANCODE* pop(); 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... enum { //possible states of keyboard 
+....................     STATE_RX, //receiving data from host 
+....................     STATE_TX, //sending data to host 
+....................     STATE_IDLE, //idle state (ok to send) 
+....................     STATE_INHIBIT //communication inhibited by host 
+.................... }; 
+....................  
+.................... static int currState = STATE_IDLE; //the current state 
+....................  
+.................... static SCANCODE queue[QUEUE_SIZE]; //queue of scancodes to send 
+.................... static int front = 0, back = 0; 
+....................  
+.................... static BOOLEAN bootFinished = FALSE; 
+.................... //static BOOLEAN SCANCODE_DELAY_PASSED = TRUE; //see configuration.h 
+.................... static int bit_index = 0; 
+.................... static int parity = HIGH; 
+.................... static BYTE tx_data; //data being transmitted 
+.................... static BOOLEAN doneTx = TRUE; //whether we are done transmitting 
+....................  
+.................... static int edge[4] = {L_TO_H, L_TO_H, L_TO_H, L_TO_H}; 
+....................  
+.................... //possible states for clock signal while txing 
+.................... enum { 
+....................     CLK_STATE_OUTPUT_BIT, 
+....................     CLK_STATE_LOW, 
+....................     CLK_STATE_HIGH 
+.................... }; 
+....................  
+.................... //possible states for data signal while txing 
+.................... enum { 
+....................     SEND_START_BIT, 
+....................     SEND_DATA_BIT, 
+....................     SEND_PARITY_BIT, 
+....................     SEND_STOP_BIT, 
+....................     //SEND_FINISH_WAIT, 
+....................     SEND_FINISH 
+.................... }; 
+....................  
+.................... static int currClkState; 
+.................... static int currDataState; 
+....................  
+.................... int16 portInput; 
+.................... int16 lastPortState; 
+.................... int16 portChange; 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... /* 
+....................  * simple circular queue push 
+....................  */ 
+....................  
+.................... static void push(SCANCODE data) { 
+*
+02B6:  MOV     W5,[W15++]
+....................     back = (back + 1) % QUEUE_SIZE; 
+02B8:  MOV     137E,W4
+02BA:  ADD     W4,#1,W5
+02BC:  MOV     W5,W4
+02BE:  MOV     #C8,W3
+02C0:  REPEAT  #11
+02C2:  DIV.S   W4,W3
+02C4:  MOV     W1,137E
+....................     queue[back] = data; 
+02C6:  MOV     137E,W4
+02C8:  MUL.UU  W4,#4,W0
+02CA:  MOV     #105C,W4
+02CC:  ADD     W0,W4,W5
+02CE:  MOV     #13C8,W4
+02D0:  MOV     [W4++],[W5++]
+02D2:  MOV     [W4++],[W5++]
+02D4:  MOV     [--W15],W5
+02D6:  RETURN  
+.................... } 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... /* 
+....................  * simple circular queue pop 
+....................  */ 
+....................  
+.................... static SCANCODE* pop() { 
+*
+0594:  MOV     W5,[W15++]
+....................     if (front != back) { 
+0596:  MOV     137C,W0
+0598:  CP      137E
+059A:  BRA     Z,5B6
+....................         front = (front + 1) % QUEUE_SIZE; 
+059C:  MOV     137C,W4
+059E:  ADD     W4,#1,W5
+05A0:  MOV     W5,W4
+05A2:  MOV     #C8,W3
+05A4:  REPEAT  #11
+05A6:  DIV.S   W4,W3
+05A8:  MOV     W1,137C
+....................         return &queue[front]; 
+05AA:  MOV     137C,W4
+05AC:  MUL.UU  W4,#4,W0
+05AE:  MOV     #105C,W4
+05B0:  ADD     W0,W4,W0
+05B2:  MOV     W0,0
+05B4:  BRA     5B8
+....................     } 
+....................     return 0; //there is no scancode 
+05B6:  CLR     0
+05B8:  MOV     [--W15],W5
+05BA:  RETURN  
+.................... } 
+....................  
+.................... /* ------------------------------------------------------------------------ */ 
+....................  
+.................... /* 
+....................  * main initialization routine 
+....................  */ 
+....................  
+.................... static void initialize(void) { 
+....................     set_pullup(TRUE, keyboard_host_clock); //default state of clock/data is high 
+*
+049C:  BSET.B  E27.3
+....................     set_pullup(TRUE, keyboard_host_data); 
+049E:  BSET.B  E27.4
+....................      
+....................     set_pulldown(TRUE, KEY_SWITCH1); //switches default low 
+04A0:  BSET.B  E28.2
+....................     set_pulldown(TRUE, KEY_SWITCH2); 
+04A2:  BSET.B  E28.3
+....................     set_pulldown(TRUE, KEY_SWITCH3); 
+04A4:  BSET.B  E28.4
+....................     set_pulldown(TRUE, KEY_SWITCH4); 
+04A6:  BSET.B  E28.5
+....................      
+....................     lastPortState = input_b(); 
+04A8:  NOP     
+04AA:  PUSH    E20
+04AC:  POP     1394
+....................  
+....................     initialize_interrupts(); 
+04AE:  CALL    480
+04B2:  RETURN  
+.................... } 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... /* 
+....................  * main routine 
+....................  */ 
+....................  
+.................... void main(void) { 
+*
+05FC:  MOV     #2F70,W15
+05FE:  MOV     #2FFF,W0
+0600:  MOV     W0,20
+0602:  NOP     
+0604:  MOV     #4444,W0
+0606:  MOV     W0,846
+0608:  BSET.B  8C1.7
+060A:  MOV     #0,W0
+060C:  MOV     W0,AC0
+060E:  MOV     #FFFF,W0
+0610:  MOV     W0,AC2
+0612:  DISI    #6
+0614:  MOV     #8D6,W1
+0616:  MOV     #55,W2
+0618:  MOV     #AA,W3
+061A:  MOV.B   W2L,[W1]
+061C:  MOV.B   W3L,[W1]
+061E:  BCLR.B  D01.3
+0620:  MOV     #2300,W0
+0622:  MOV     W0,D04
+0624:  MOV     #2524,W0
+0626:  MOV     W0,D06
+0628:  DISI    #6
+062A:  MOV     #8D6,W1
+062C:  MOV     #55,W2
+062E:  MOV     #AA,W3
+0630:  MOV.B   W2L,[W1]
+0632:  MOV.B   W3L,[W1]
+0634:  BSET.B  D01.3
+0636:  CLR     E00
+0638:  CLR     E1C
+063A:  CLR     E38
+063C:  CLR     E54
+063E:  BCLR.B  1380.0
+0640:  BSET.B  1380.1
+0642:  BRA     674
+0644:  DATA    80,01,10
+0646:  DATA    5A,02,43
+0648:  DATA    25,00,80
+064A:  DATA    0C,13,81
+064C:  DATA    00,00,00
+064E:  DATA    01,00,40
+0650:  DATA    00,40,00
+0652:  DATA    40,00,40
+0654:  DATA    40,05,00
+0656:  DATA    00,00,00
+0658:  INC     W2,W2
+065A:  CP      W2,#1
+065C:  BRA     NZ,666
+065E:  TBLRDL  [W1],W3
+0660:  TBLRDH  [W1++],W4
+0662:  MOV.B   6,W0L
+0664:  RETURN  
+0666:  CP      W2,#2
+0668:  BRA     NZ,66E
+066A:  MOV.B   7,W0L
+066C:  RETURN  
+066E:  MOV.B   8,W0L
+0670:  CLR     W2
+0672:  RETURN  
+0674:  MOV     #0,W6
+0676:  MOV     #0,W0
+0678:  MOV     W0,54
+067A:  MOV     #644,W0
+067C:  MOV     W0,W1
+067E:  CLR     W2
+0680:  CALL    658
+0684:  MOV.B   W0L,B
+0686:  CALL    658
+068A:  MOV.B   W0L,A
+068C:  CP0     W5
+068E:  BRA     Z,6C2
+0690:  BTSS    W5.F
+0692:  BRA     6A2
+0694:  CALL    658
+0698:  MOV.B   W0L,D
+069A:  CALL    658
+069E:  MOV.B   W0L,C
+06A0:  BCLR    W5.F
+06A2:  BTSS    W5.E
+06A4:  BRA     6B6
+06A6:  BCLR    W5.E
+06A8:  DEC     W5,W5
+06AA:  CALL    658
+06AE:  MOV.B   W0L,W7L
+06B0:  REPEAT  W5
+06B2:  MOV.B   W7L,[W6++]
+06B4:  BRA     680
+06B6:  CALL    658
+06BA:  MOV.B   W0L,[W6++]
+06BC:  DEC     W5,W5
+06BE:  BRA     NZ,6B6
+06C0:  BRA     680
+.................... #ifdef DEBUG 
+....................     printf("Starting program.\r\n"); 
+.................... #endif 
+....................     initialize(); 
+06C2:  CALL    49C
+....................     //delay_ms(1); //allow timers to interrupt at least once to check initial kb state 
+....................      
+....................     /*while(1){ 
+....................         SCANCODE s; 
+....................         s.delay = 100; 
+....................         s.scancode = KEYBOARD_BAT; 
+....................         send_to_host(s); 
+....................     }*/ 
+....................      
+....................     BYTE command; //current host command 
+....................     SCANCODE* packet; //current packet being transmitted 
+....................     int counter = 0; 
+06C6:  CLR     139C
+....................      
+....................     while (1) { //receive commands if there are any, send scancodes if there are any 
+....................         if (currState != STATE_TX) { 
+06C8:  MOV     105A,W4
+06CA:  CP      W4,#1
+06CC:  BRA     Z,6EC
+....................             if (device_communication_inhibited()) { //check if communication is inhibited 
+06CE:  CALL    4B4
+06D2:  CP0.B   W0L
+06D4:  BRA     Z,6E8
+....................                 if (is_host_requesting_to_send()) { 
+06D6:  CALL    4D0
+06DA:  CP0.B   W0L
+06DC:  BRA     Z,6E2
+....................                     currState = STATE_RX; 
+06DE:  CLR     105A
+....................                 } else { 
+06E0:  BRA     6E6
+....................                     currState = STATE_INHIBIT; 
+06E2:  MOV     #3,W4
+06E4:  MOV     W4,105A
+....................                 } 
+....................             } else { 
+06E6:  BRA     6EC
+....................                 currState = STATE_IDLE; //ok to send 
+06E8:  MOV     #2,W4
+06EA:  MOV     W4,105A
+....................             } 
+....................         } 
+....................         if (currState == STATE_RX) { //if there is a command 
+06EC:  CP0     105A
+06EE:  BRA     NZ,74E
+....................             //disable_interrupts(INT_TIMER1); //make sure timer doesn't interfere with data transfer 
+....................             command = execute_host_command(); //receive command from host 
+06F0:  CALL    566
+06F4:  MOV.B   W0L,1398
+....................             //enable_interrupts(INT_TIMER1); 
+....................             switch (command) { 
+06F6:  MOV.B   1398,W0L
+06F8:  CLR.B   1
+06FA:  XOR     #FF,W0
+06FC:  BRA     Z,718
+06FE:  XOR     #A,W0
+0700:  BRA     Z,734
+0702:  XOR     #1,W0
+0704:  BRA     Z,736
+0706:  XOR     #19,W0
+0708:  BRA     Z,738
+070A:  XOR     #ED,W0
+070C:  BRA     Z,73E
+070E:  XOR     #2,W0
+0710:  BRA     Z,744
+0712:  XOR     #F1,W0
+0714:  BRA     Z,746
+0716:  BRA     748
+....................                 case KEYBOARD_RESET: //reset if necessary 
+....................                     SCANCODE s; 
+....................                     s.scancode = KEYBOARD_BAT; 
+0718:  MOV.B   #AA,W0L
+071A:  MOV.B   W0L,139E
+....................                     s.delay = RESET_DELAY; //delay before resetting 
+071C:  MOV     #64,W4
+071E:  MOV     W4,13A0
+0720:  PUSH    8C2
+0722:  BCLR.B  8C3.7
+....................                     push(s); 
+0724:  PUSH    139E
+0726:  POP     13C8
+0728:  PUSH    13A0
+072A:  POP     13CA
+072C:  CALL    2B6
+0730:  POP     8C2
+....................                     break; 
+0732:  BRA     74A
+....................                 case KEYBOARD_DISABLE: 
+....................                     break; 
+0734:  BRA     74A
+....................                 case KEYBOARD_ENABLE: 
+....................                     break; 
+0736:  BRA     74A
+....................                 case SET_LED_CMD: //set led 
+....................                     output_high(keyboard_host_led); 
+0738:  BCLR.B  E02.0
+073A:  BSET.B  E06.0
+....................                     break; 
+073C:  BRA     74A
+....................                 case CLEAR_LEDS: //clear led 
+....................                     output_low(keyboard_host_led); 
+073E:  BCLR.B  E02.0
+0740:  BCLR.B  E06.0
+....................                     break; 
+0742:  BRA     74A
+....................                 case NUM_LOCK_LED: 
+....................                     break; 
+0744:  BRA     74A
+....................                 case SET_TYPEMATIC_CMD: //this kb isn't intended for typing so typematic delay is unnecessary 
+....................                     break; 
+0746:  BRA     74A
+....................                 default: 
+....................                     break; 
+0748:  BRA     74A
+....................             } 
+....................             currState = STATE_IDLE; 
+074A:  MOV     #2,W4
+074C:  MOV     W4,105A
+....................         } 
+....................         if (currState == STATE_IDLE) {//ok to transmit in this state 
+074E:  MOV     105A,W4
+0750:  CP      W4,#2
+0752:  BRA     NZ,784
+....................             packet = pop(); 
+0754:  CALL    594
+0758:  MOV     W0,139A
+....................             if (packet) { 
+075A:  CP0     139A
+075C:  BRA     Z,784
+....................                 if (!bootFinished) { //still in boot up stage 
+075E:  BTSC.B  1380.0
+0760:  BRA     774
+....................                     //disable_interrupts(INT_TIMER1); 
+....................                     send_to_host(*packet); 
+0762:  MOV     139A,W0
+0764:  MOV     #A,W4
+0766:  MOV     [W0++],[W4++]
+0768:  MOV     [W0++],[W4++]
+076A:  MOV     W5,13A6
+076C:  MOV     W6,13A8
+076E:  CALL    5CC
+....................                 }else{ 
+0772:  BRA     784
+....................                     send_to_host(*packet); 
+0774:  MOV     139A,W0
+0776:  MOV     #A,W4
+0778:  MOV     [W0++],[W4++]
+077A:  MOV     [W0++],[W4++]
+077C:  MOV     W5,13A6
+077E:  MOV     W6,13A8
+0780:  CALL    5CC
+....................                 } 
+....................             } 
+....................         } 
+....................         if (currState == STATE_TX) { 
+0784:  MOV     105A,W4
+0786:  CP      W4,#1
+0788:  BRA     NZ,792
+....................             if (doneTx) { 
+078A:  BTSS.B  1380.1
+078C:  BRA     792
+....................                 //set_pullup(TRUE, keyboard_host_clock); //reenable pullups 
+....................                 //set_pullup(TRUE, keyboard_host_data); 
+....................                 /*if(!bootFinished){ 
+....................                     enable_interrupts(INT_TIMER1); 
+....................                 }*/ 
+....................                 currState = STATE_IDLE; //immediately go back to sending scancodes 
+078E:  MOV     #2,W4
+0790:  MOV     W4,105A
+....................             } 
+....................         } 
+0792:  BRA     6C8
+....................         //update_switches(); 
+....................     } 
+.................... } 
+....................  
+0794:  BRA     794
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... /******************************************************************************/ 
+.................... /*																			  */ 
+.................... /* 		PS/2 host and device keyboard low level PS/2 protocol routines	      */ 
+.................... /*																			  */ 
+.................... /*		A host is typically a personal computer with PS/2 connector, 		  */ 
+.................... /* 		and device is typically a PS/2 keyboard or a PS/2 three-button mouse  */ 
+.................... /*																			  */ 
+.................... /******************************************************************************/ 
+....................  
+.................... /* 
+....................  * checks if communications are being inhibited by host 
+....................  */ 
+....................  
+.................... BOOLEAN device_communication_inhibited(void) { 
+*
+04B4:  MOV     W5,[W15++]
+04B6:  MOV     W6,[W15++]
+....................     //both must be high to be ok to send 
+....................     return (input(keyboard_host_data) != HIGH || input(keyboard_host_clock) != HIGH); 
+04B8:  NOP     
+04BA:  BTSS.B  E21.4
+04BC:  BRA     4C8
+04BE:  NOP     
+04C0:  BTSS.B  E21.3
+04C2:  BRA     4C8
+04C4:  CLR.B   W0
+04C6:  BRA     4CA
+04C8:  MOV.B   #1,W0L
+04CA:  MOV     [--W15],W6
+04CC:  MOV     [--W15],W5
+04CE:  RETURN  
+.................... } 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... /* 
+....................  * checks if host has sent a request-to-send 
+....................  */ 
+....................  
+.................... BOOLEAN is_host_requesting_to_send(void) { 
+04D0:  MOV     W5,[W15++]
+04D2:  MOV     W6,[W15++]
+....................     //if both are low, host pc wants to send 
+....................     return (input(keyboard_host_data) == LOW && input(keyboard_host_clock) == LOW); 
+04D4:  NOP     
+04D6:  BTSC.B  E21.4
+04D8:  BRA     4E0
+04DA:  NOP     
+04DC:  BTSS.B  E21.3
+04DE:  BRA     4E4
+04E0:  CLR.B   W0
+04E2:  BRA     4E6
+04E4:  MOV.B   #1,W0L
+04E6:  MOV     [--W15],W6
+04E8:  MOV     [--W15],W5
+04EA:  RETURN  
+.................... } 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... /* 
+....................  * This routine receives a command code from the host 
+....................  * 
+....................  *		-- this routine acts as a device 
+....................  * 
+....................  *		precondition: host has done a request-to-send 
+....................  */ 
+....................  
+.................... BYTE receive_from_host(void) { 
+*
+04FE:  MOV     W5,[W15++]
+0500:  CLR.B   13A8
+....................  
+....................     int i; 
+....................     int rx_data[10]; /* 8 data bits, one parity bit, one stop bit */ 
+....................     BYTE commandcode = 0; 
+....................      
+....................     while (input(keyboard_host_clock) != HIGH); //wait for host to release clock line 
+0502:  NOP     
+0504:  BTSS.B  E21.3
+0506:  BRA     502
+....................     //delay_us(SCANCODE_DELAY); 
+....................     //output_drive(keyboard_host_data); 
+....................     output_drive(keyboard_host_clock); 
+0508:  BCLR.B  E1F.3
+....................     /* read the eight data bits, one parity bit, and one stop bit */ 
+....................     for (i = 0; i < 10; i++) { 
+050A:  CLR     13AA
+050C:  MOV     13AA,W4
+050E:  CP      W4,#A
+0510:  BRA     GE,544
+....................         output_low(keyboard_host_clock); 
+0512:  BCLR.B  E23.3
+....................         delay_us(CLOCK_PERIOD); 
+0514:  REPEAT  #1F2
+0516:  NOP     
+....................         if (i < 8) { 
+0518:  MOV     13AA,W4
+051A:  CP      W4,#8
+051C:  BRA     GE,53A
+....................             if (input(keyboard_host_data) == HIGH) { /* compiler bug: input() */ 
+051E:  NOP     
+0520:  BTSS.B  E21.4
+0522:  BRA     530
+....................                 //rx_data[i] = HIGH; /* does not like to assign to an array element */ 
+....................                 bit_set(commandcode, i); 
+0524:  MOV     #13A8,W2
+0526:  MOV     13AA,W0
+0528:  MOV     #1,W1
+052A:  CALL    4EC
+....................             } else { 
+052E:  BRA     53A
+....................                 //rx_data[i] = LOW; 
+....................                 bit_clear(commandcode, i); 
+0530:  MOV     #13A8,W2
+0532:  MOV     13AA,W0
+0534:  MOV     #0,W1
+0536:  CALL    4EC
+....................             } 
+....................         } 
+....................         output_high(keyboard_host_clock); /* generate clock pulse */ 
+053A:  BSET.B  E23.3
+....................         delay_us(CLOCK_PERIOD); 
+053C:  REPEAT  #1F2
+053E:  NOP     
+0540:  INC     13AA
+0542:  BRA     50C
+....................     } 
+....................  
+....................     output_drive(keyboard_host_data); 
+0544:  BCLR.B  E1F.4
+....................      
+....................     /* send the acknowledgment */ 
+....................     output_low(keyboard_host_data); 
+0546:  BCLR.B  E23.4
+....................     delay_us(CLOCK_PERIOD_HALF); 
+0548:  REPEAT  #F8
+054A:  NOP     
+....................     output_low(keyboard_host_clock); 
+054C:  BCLR.B  E23.3
+....................     delay_us(CLOCK_PERIOD); 
+054E:  REPEAT  #1F2
+0550:  NOP     
+....................     output_high(keyboard_host_clock); 
+0552:  BSET.B  E23.3
+....................     delay_us(CLOCK_PERIOD_HALF); 
+0554:  REPEAT  #F8
+0556:  NOP     
+....................     output_high(keyboard_host_data); 
+0558:  BSET.B  E23.4
+....................  
+....................     output_float(keyboard_host_clock); /* set to high impedance input */ 
+055A:  BSET.B  E1F.3
+....................     output_float(keyboard_host_data); 
+055C:  BSET.B  E1F.4
+....................  
+....................     return commandcode; 
+055E:  MOV.B   13A8,W0L
+0560:  MOV.B   W0L,0
+0562:  MOV     [--W15],W5
+0564:  RETURN  
+.................... } 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... /* 
+....................  * gets a command from the host and sends acknowledgment 
+....................  * precondition: host has sent a request-to-send 
+....................  */ 
+....................  
+.................... BYTE execute_host_command() { 
+....................     BYTE commandcode; 
+....................     SCANCODE s; 
+....................     commandcode = receive_from_host(); //get a command code from host 
+0566:  CALL    4FE
+056A:  MOV.B   W0L,13A2
+....................     s.scancode = KEYBOARD_ACK; 
+056C:  MOV.B   #FA,W0L
+056E:  MOV.B   W0L,13A4
+....................     s.delay = ACK_DELAY; 
+0570:  MOV     #3E8,W4
+0572:  MOV     W4,13A6
+0574:  PUSH    8C2
+0576:  BCLR.B  8C3.7
+....................     push(s); 
+0578:  PUSH    13A4
+057A:  POP     13C8
+057C:  PUSH    13A6
+057E:  POP     13CA
+0580:  CALL    2B6
+0584:  POP     8C2
+....................     while (device_communication_inhibited()); //wait for host to release clock/data lines 
+0586:  CALL    4B4
+058A:  CP0.B   W0L
+058C:  BRA     NZ,586
+....................     return commandcode; 
+058E:  MOV.B   13A2,W0L
+0590:  MOV.B   W0L,0
+0592:  RETURN  
+.................... } 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... /* 
+....................  * This routine sends a packet to the host  
+....................  */ 
+....................  
+.................... void send_to_host(SCANCODE packet) { 
+....................   
+....................     while(device_communication_inhibited()); //wait for the ok to send 
+*
+05CC:  CALL    4B4
+05D0:  CP0.B   W0L
+05D2:  BRA     NZ,5CC
+....................     if (packet.delay){ 
+05D4:  CP0     13A8
+05D6:  BRA     Z,5DE
+....................         delay_us(packet.delay); 
+05D8:  MOV     13A8,W0
+05DA:  CALL    5BC
+....................     } 
+....................     //delay_us(SCANCODE_DELAY); 
+....................     //set_pullup(FALSE, keyboard_host_clock); //make sure signal isn't distorted 
+....................     //set_pullup(FALSE, keyboard_host_data); 
+....................     tx_data = packet.scancode; 
+05DE:  MOV.B   13A6,W0L
+05E0:  MOV.B   W0L,1381
+....................     doneTx = FALSE; 
+05E2:  BCLR.B  1380.1
+....................     bit_index = 0; 
+05E4:  CLR     1382
+....................     parity = HIGH; 
+05E6:  MOV     #1,W4
+05E8:  MOV     W4,1384
+....................     set_timer1(65535); //start sending immediately 
+05EA:  SETM    104
+....................     output_drive(keyboard_host_clock); //set clock/data to output mode 
+05EC:  BCLR.B  E1F.3
+....................     output_drive(keyboard_host_data); 
+05EE:  BCLR.B  E1F.4
+....................     //output_high(keyboard_host_clock); 
+....................     //output_high(keyboard_host_data); 
+....................     currDataState = SEND_START_BIT; //reset data line state machine 
+05F0:  CLR     1390
+....................     currClkState = CLK_STATE_OUTPUT_BIT; //reset clock line state machine 
+05F2:  CLR     138E
+....................     currState = STATE_TX; 
+05F4:  MOV     #1,W4
+05F6:  MOV     W4,105A
+....................     enable_interrupts(INT_TIMER1); //turn on tx handler 
+05F8:  BSET.B  820.1
+05FA:  RETURN  
+....................     /*while(device_communication_inhibited()); //wait for the ok to send 
+....................     while(!SCANCODE_DELAY_PASSED); //make sure enough time between scancodes passes 
+....................      
+....................     if (packet.delay){ 
+....................         delay_us(packet.delay); 
+....................     } 
+....................      
+....................     int i; 
+.................... 	int ndata = 0; 
+.................... 	int parity = HIGH; 
+.................... 	int data[11]; // one start bit, 8 data bits, one parity bit, one stop bit 
+.................... 	int a_bit; 
+....................      
+....................     // set start bit 
+.................... 	data[ndata++] = LOW; 
+....................  
+.................... 	// set data bits and compute parity bit 
+.................... 	for (i = 0; i < 8; i++) { 
+.................... 		a_bit = bit_test(packet.scancode, i); 
+.................... 		parity ^= a_bit; 
+.................... 		data[ndata++] = a_bit; 
+.................... 	} 
+....................      
+.................... 	// set parity bit 
+.................... 	data[ndata++] = parity; 
+....................  
+.................... 	// set stop bit 
+.................... 	data[ndata++] = HIGH; 
+....................      
+....................     for (i = 0; i < ndata; i++) { 
+.................... 		output_bit(keyboard_host_data, data[i]); 
+.................... 		delay_us(CLOCK_PERIOD_HALF); 
+.................... 		output_low(keyboard_host_clock);		// generate clock pulse 
+.................... 		delay_us(CLOCK_PERIOD); 
+.................... 		output_high(keyboard_host_clock);		// generate clock pulse 
+.................... 		delay_us(CLOCK_PERIOD_HALF); 
+.................... 	} 
+....................      
+....................     set_pullup(TRUE, keyboard_host_clock); //re-enable pullups 
+....................     set_pullup(TRUE, keyboard_host_data); 
+....................      
+....................     output_float(keyboard_host_data); 
+....................     output_float(keyboard_host_clock); 
+....................      
+....................     SCANCODE_DELAY_PASSED = FALSE; 
+....................     set_timer3(TIMER3_START); 
+....................     enable_interrupts(INT_TIMER3);*/ 
+.................... } 
+....................  
+.................... /******************************************************************************/ 
+.................... /*																			  */ 
+.................... /*				interrupt management and handling routines					  */ 
+.................... /*																			  */ 
+.................... /******************************************************************************/ 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... /* 
+....................  * this routine initializes the interrupts 
+....................  */ 
+....................  
+.................... //#BYTE IOCPB = getenv("SFR:IOCPB") 
+.................... //#BYTE IOCNB = getenv("SFR:IOCNB") 
+.................... static void initialize_interrupts(void) { 
+.................... #ifdef DEBUG 
+....................     printf("initialize_interrupts():\r\n"); 
+.................... #endif 
+....................  
+....................     //key press/release interrupts for each switch 
+....................     ext_int_edge(0, L_TO_H); 
+*
+0480:  BCLR.B  8C2.0
+....................     ext_int_edge(1, L_TO_H); 
+0482:  BCLR.B  8C2.1
+....................     ext_int_edge(2, L_TO_H); 
+0484:  BCLR.B  8C2.2
+....................     ext_int_edge(3, L_TO_H); 
+0486:  BCLR.B  8C2.3
+....................     //IOCPB = 0xFF; //set the pin change registers to detect rising/falling edges 
+....................     //IOCNB = 0xFF; 
+....................     enable_interrupts(INT_EXT0); 
+0488:  BSET.B  820.0
+....................     enable_interrupts(INT_EXT1); 
+048A:  BSET.B  821.7
+....................     enable_interrupts(INT_EXT2); 
+048C:  BSET.B  822.4
+....................     enable_interrupts(INT_EXT3); 
+048E:  BSET.B  823.2
+....................     //enable_interrupts(INTR_CN_PIN | KEY_SWITCH2 | KEY_SWITCH3 | KEY_SWITCH4); 
+....................  
+....................     setup_timer1(TMR_INTERNAL | TMR_DIV_BY_1); //prescalar 1 
+0490:  CLR     100
+0492:  SETM    108
+0494:  MOV     #8000,W4
+0496:  MOV     W4,100
+....................     //setup_timer2(TMR_INTERNAL | TMR_DIV_BY_256, TIMER2_PERIOD); //prescalar 256, triggers every 2 seconds 
+....................     //setup_timer3(TMR_INTERNAL | TMR_DIV_BY_1); //prescalar 1 
+....................    
+....................     //set_timer1(TIMER1_START); //check for state changes every 0.05ms during boot up 
+....................      
+....................     //enable_interrupts(INT_TIMER1); 
+....................     //enable_interrupts(INT_TIMER2); 
+....................  
+....................     enable_interrupts(GLOBAL); 
+0498:  BSET.B  8C3.7
+....................  
+.................... #ifdef DEBUG 
+049A:  RETURN  
+....................     printf("initialize_interrupts() done\r\n"); 
+.................... #endif 
+.................... } 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+....................  
+.................... /* 
+....................  * this is the 16 bit timer1 overflow interrupt service used to update the state of 
+....................  * the PS/2 keyboard. This is only run when the PC boots up, otherwise it is assumed the kb  
+....................  * is in an idle state. 
+....................  */ 
+.................... /* 
+.................... #INT_TIMER1 
+.................... void timer1_isr(void) { 
+....................     if (device_communication_inhibited()) { //check if communication is inhibited 
+....................         if (is_host_requesting_to_send()) { 
+....................             currState = STATE_RX; 
+....................         } else { 
+....................             currState = STATE_INHIBIT; 
+....................         } 
+....................     } else { 
+....................         currState = STATE_IDLE; //ok to send 
+....................     } 
+....................     set_timer1(TIMER1_START); //reset timer 
+.................... }*/ 
+....................  
+.................... //static int milliseconds_passed = 0; 
+....................  
+.................... /*#INT_TIMER2 
+.................... void timer2_isr(void) { 
+....................     milliseconds_passed += TIMER2_INCR; 
+....................     if (milliseconds_passed >= BOOT_TIME){ 
+....................         disable_interrupts(INT_TIMER1); //turn off timer1 now 
+....................         bootFinished = TRUE; 
+....................         currState = STATE_IDLE; //force idle state 
+....................         disable_interrupts(INT_TIMER2); //and turn off timer2 
+....................     } 
+.................... }*/ 
+....................  
+.................... //static int timer3_cycles = 0; 
+....................  
+.................... /*#INT_TIMER3 
+.................... void timer3_isr(void) { 
+....................     timer3_cycles += 1; 
+....................     if (timer3_cycles % 2 == 0) { //ignore initial interrupt trigger 
+....................         SCANCODE_DELAY_PASSED = TRUE; 
+....................         disable_interrupts(INT_TIMER3); 
+....................     } 
+....................     set_timer3(TIMER3_START); 
+.................... }*/ 
+....................  
+.................... /* 
+....................  * this is the 16 bit timer3 overflow interrupt service used for txing data 
+....................  * note - the signals generated here may appear distorted if using debug mode 
+....................  */ 
+....................  
+.................... #INT_TIMER1 
+.................... void timer1_isr(void) { 
+*
+0200:  PUSH    42
+0202:  PUSH    36
+0204:  PUSH    54
+0206:  MOV     W0,[W15++]
+0208:  MOV     #2,W0
+020A:  REPEAT  #C
+020C:  MOV     [W0++],[W15++]
+....................  
+....................     switch (currClkState) { 
+020E:  MOV     138E,W0
+0210:  XOR     #0,W0
+0212:  BRA     Z,21E
+0214:  XOR     #1,W0
+0216:  BRA     Z,27A
+0218:  XOR     #3,W0
+021A:  BRA     Z,282
+021C:  BRA     2A2
+....................  
+....................         case CLK_STATE_OUTPUT_BIT: 
+....................              
+....................             switch (currDataState) { 
+021E:  MOV     1390,W0
+0220:  XOR     #0,W0
+0222:  BRA     Z,232
+0224:  XOR     #1,W0
+0226:  BRA     Z,238
+0228:  XOR     #3,W0
+022A:  BRA     Z,260
+022C:  XOR     #1,W0
+022E:  BRA     Z,26E
+0230:  BRA     274
+....................                 case SEND_START_BIT: 
+....................                     output_low(keyboard_host_data); 
+0232:  BCLR.B  E23.4
+....................                     currDataState++; 
+0234:  INC     1390
+....................                     break; 
+0236:  BRA     274
+....................                 case SEND_DATA_BIT: 
+....................                     int currBit = bit_test(tx_data, bit_index); 
+0238:  MOV.B   1381,W0L
+023A:  MOV.B   W0L,W1L
+023C:  MOV.B   1382,W0L
+023E:  BTST.C  W1.W0
+....................                     output_bit(keyboard_host_data, currBit); 
+*
+0246:  CP0     13C4
+0248:  BRA     NZ,24E
+024A:  BCLR.B  E23.4
+024C:  BRA     250
+024E:  BSET.B  E23.4
+....................                     parity ^= currBit; 
+0250:  MOV     13C4,W0
+0252:  XOR     1384
+....................                     bit_index++; 
+0254:  INC     1382
+....................                     if (bit_index == 8) { 
+0256:  MOV     1382,W4
+0258:  CP      W4,#8
+025A:  BRA     NZ,25E
+....................                         currDataState++; 
+025C:  INC     1390
+....................                     } 
+....................                     break; 
+025E:  BRA     274
+....................                 case SEND_PARITY_BIT: 
+....................                     output_bit(keyboard_host_data, parity); 
+0260:  CP0     1384
+0262:  BRA     NZ,268
+0264:  BCLR.B  E23.4
+0266:  BRA     26A
+0268:  BSET.B  E23.4
+....................                     currDataState++; 
+026A:  INC     1390
+....................                     break; 
+026C:  BRA     274
+....................                 case SEND_STOP_BIT: 
+....................                     output_high(keyboard_host_data); 
+026E:  BSET.B  E23.4
+....................                     currDataState++; 
+0270:  INC     1390
+....................                     break; 
+0272:  BRA     274
+....................             } 
+....................             set_timer1(TIMER_CLOCKP_H_START); 
+0274:  MOV     #FF05,W4
+0276:  MOV     W4,104
+....................             break; 
+0278:  BRA     2A2
+....................  
+....................         case CLK_STATE_LOW: 
+....................  
+....................             output_low(keyboard_host_clock); 
+027A:  BCLR.B  E23.3
+....................             set_timer1(TIMER_CLOCKP_START); 
+027C:  MOV     #FE0B,W4
+027E:  MOV     W4,104
+....................             break; 
+0280:  BRA     2A2
+....................  
+....................         case CLK_STATE_HIGH: 
+....................  
+....................             /*if(currDataState == SEND_FINISH_WAIT){ 
+....................                         set_timer2(65535); //add delay to end of scancode 
+....................                         output_float(keyboard_host_data); //set data to high impedance 
+....................                         output_float(keyboard_host_clock); //set clock to high impedance 
+....................                         currDataState++; 
+....................                         return; 
+....................                     } 
+....................                     else */ 
+....................             if (currDataState == SEND_FINISH) { //we are done transmitting the packet 
+0282:  MOV     1390,W4
+0284:  CP      W4,#4
+0286:  BRA     NZ,298
+....................                 //output_high(keyboard_host_clock); 
+....................                 //output_high(keyboard_host_data); 
+....................                 output_float(keyboard_host_data); //set data to high impedance 
+0288:  BSET.B  E1F.4
+....................                 output_float(keyboard_host_clock); //set clock to high impedance 
+028A:  BSET.B  E1F.3
+....................                 disable_interrupts(INT_TIMER1); //turn off tx handler 
+028C:  BCLR.B  820.1
+028E:  NOP     
+0290:  NOP     
+....................                 doneTx = TRUE; 
+0292:  BSET.B  1380.1
+....................                 return; 
+0294:  BRA     2A4
+....................             } else { 
+0296:  BRA     29E
+....................                 output_high(keyboard_host_clock); 
+0298:  BSET.B  E23.3
+....................                 set_timer1(TIMER_CLOCKP_H_START); 
+029A:  MOV     #FF05,W4
+029C:  MOV     W4,104
+....................             } 
+....................             currClkState = -1; //reset clock line state machine 
+029E:  SETM    138E
+....................             break; 
+02A0:  BRA     2A2
+....................  
+....................     } 
+....................     currClkState++; 
+02A2:  INC     138E
+.................... } 
+....................  
+02A4:  BCLR.B  800.1
+02A6:  MOV     #1A,W0
+02A8:  REPEAT  #C
+02AA:  MOV     [--W15],[W0--]
+02AC:  MOV     [--W15],W0
+02AE:  POP     54
+02B0:  POP     36
+02B2:  POP     42
+02B4:  RETFIE  
+.................... #INT_EXT0 
+.................... void ext0_isr(void) 
+*
+02D8:  PUSH    42
+02DA:  PUSH    36
+02DC:  PUSH    54
+02DE:  MOV     W0,[W15++]
+02E0:  MOV     #2,W0
+02E2:  REPEAT  #C
+02E4:  MOV     [W0++],[W15++]
+.................... { 
+....................     SCANCODE s; 
+....................     s.delay = 0; 
+02E6:  CLR     13C6
+....................     output_toggle(keyboard_host_led); 
+02E8:  BCLR.B  E02.0
+02EA:  BTG.B   E06.0
+....................     if(edge[0] == L_TO_H){ //key press detected 
+02EC:  MOV     1386,W4
+02EE:  XOR     #40,W4
+02F0:  BRA     NZ,308
+....................         edge[0] = H_TO_L; 
+02F2:  CLR     1386
+....................         ext_int_edge(0, H_TO_L); 
+02F4:  BSET.B  8C2.0
+....................         s.scancode = KEY_A; 
+02F6:  MOV.B   #1C,W0L
+02F8:  MOV.B   W0L,13C4
+....................         push(s); 
+02FA:  PUSH    13C4
+02FC:  POP     13C8
+02FE:  PUSH    13C6
+0300:  POP     13CA
+0302:  CALL    2B6
+....................     } else { //key release detected 
+0306:  BRA     32E
+....................         edge[0] = L_TO_H; 
+0308:  MOV     #40,W4
+030A:  MOV     W4,1386
+....................         ext_int_edge(0, L_TO_H); 
+030C:  BCLR.B  8C2.0
+....................         s.scancode = BREAK_CODE; 
+030E:  MOV.B   #F0,W0L
+0310:  MOV.B   W0L,13C4
+....................         push(s); 
+0312:  PUSH    13C4
+0314:  POP     13C8
+0316:  PUSH    13C6
+0318:  POP     13CA
+031A:  CALL    2B6
+....................         s.scancode = KEY_A; 
+031E:  MOV.B   #1C,W0L
+0320:  MOV.B   W0L,13C4
+....................         push(s); 
+0322:  PUSH    13C4
+0324:  POP     13C8
+0326:  PUSH    13C6
+0328:  POP     13CA
+032A:  CALL    2B6
+....................     } 
+....................     clear_interrupt(INT_EXT0); 
+032E:  BCLR.B  800.0
+.................... } 
+....................  
+0330:  BCLR.B  800.0
+0332:  MOV     #1A,W0
+0334:  REPEAT  #C
+0336:  MOV     [--W15],[W0--]
+0338:  MOV     [--W15],W0
+033A:  POP     54
+033C:  POP     36
+033E:  POP     42
+0340:  RETFIE  
+.................... #INT_EXT1 
+.................... void ext1_isr(void) 
+0342:  PUSH    42
+0344:  PUSH    36
+0346:  PUSH    54
+0348:  MOV     W0,[W15++]
+034A:  MOV     #2,W0
+034C:  REPEAT  #C
+034E:  MOV     [W0++],[W15++]
+.................... { 
+....................     SCANCODE s; 
+....................     s.delay = 0; 
+0350:  CLR     13C6
+....................     output_toggle(keyboard_host_led); 
+0352:  BCLR.B  E02.0
+0354:  BTG.B   E06.0
+....................     if(edge[1] == L_TO_H){ //key press detected 
+0356:  MOV     1388,W4
+0358:  XOR     #40,W4
+035A:  BRA     NZ,372
+....................         edge[1] = H_TO_L; 
+035C:  CLR     1388
+....................         ext_int_edge(1, H_TO_L); 
+035E:  BSET.B  8C2.1
+....................         s.scancode = KEY_B; 
+0360:  MOV.B   #32,W0L
+0362:  MOV.B   W0L,13C4
+....................         push(s); 
+0364:  PUSH    13C4
+0366:  POP     13C8
+0368:  PUSH    13C6
+036A:  POP     13CA
+036C:  CALL    2B6
+....................     } else { //key release detected 
+0370:  BRA     398
+....................         edge[1] = L_TO_H; 
+0372:  MOV     #40,W4
+0374:  MOV     W4,1388
+....................         ext_int_edge(1, L_TO_H); 
+0376:  BCLR.B  8C2.1
+....................         s.scancode = BREAK_CODE; 
+0378:  MOV.B   #F0,W0L
+037A:  MOV.B   W0L,13C4
+....................         push(s); 
+037C:  PUSH    13C4
+037E:  POP     13C8
+0380:  PUSH    13C6
+0382:  POP     13CA
+0384:  CALL    2B6
+....................         s.scancode = KEY_B; 
+0388:  MOV.B   #32,W0L
+038A:  MOV.B   W0L,13C4
+....................         push(s); 
+038C:  PUSH    13C4
+038E:  POP     13C8
+0390:  PUSH    13C6
+0392:  POP     13CA
+0394:  CALL    2B6
+....................     } 
+....................     clear_interrupt(INT_EXT1); 
+0398:  BCLR.B  801.7
+.................... } 
+....................  
+039A:  BCLR.B  801.7
+039C:  MOV     #1A,W0
+039E:  REPEAT  #C
+03A0:  MOV     [--W15],[W0--]
+03A2:  MOV     [--W15],W0
+03A4:  POP     54
+03A6:  POP     36
+03A8:  POP     42
+03AA:  RETFIE  
+.................... #INT_EXT2 
+.................... void ext2_isr(void) 
+03AC:  PUSH    42
+03AE:  PUSH    36
+03B0:  PUSH    54
+03B2:  MOV     W0,[W15++]
+03B4:  MOV     #2,W0
+03B6:  REPEAT  #C
+03B8:  MOV     [W0++],[W15++]
+.................... { 
+....................     SCANCODE s; 
+....................     s.delay = 0; 
+03BA:  CLR     13C6
+....................     output_toggle(keyboard_host_led); 
+03BC:  BCLR.B  E02.0
+03BE:  BTG.B   E06.0
+....................     if(edge[2] == L_TO_H){ //key press detected 
+03C0:  MOV     138A,W4
+03C2:  XOR     #40,W4
+03C4:  BRA     NZ,3DC
+....................         edge[2] = H_TO_L; 
+03C6:  CLR     138A
+....................         ext_int_edge(2, H_TO_L); 
+03C8:  BSET.B  8C2.2
+....................         s.scancode = KEY_C; 
+03CA:  MOV.B   #21,W0L
+03CC:  MOV.B   W0L,13C4
+....................         push(s); 
+03CE:  PUSH    13C4
+03D0:  POP     13C8
+03D2:  PUSH    13C6
+03D4:  POP     13CA
+03D6:  CALL    2B6
+....................     } else { //key release detected 
+03DA:  BRA     402
+....................         edge[2] = L_TO_H; 
+03DC:  MOV     #40,W4
+03DE:  MOV     W4,138A
+....................         ext_int_edge(2, L_TO_H); 
+03E0:  BCLR.B  8C2.2
+....................         s.scancode = BREAK_CODE; 
+03E2:  MOV.B   #F0,W0L
+03E4:  MOV.B   W0L,13C4
+....................         push(s); 
+03E6:  PUSH    13C4
+03E8:  POP     13C8
+03EA:  PUSH    13C6
+03EC:  POP     13CA
+03EE:  CALL    2B6
+....................         s.scancode = KEY_C; 
+03F2:  MOV.B   #21,W0L
+03F4:  MOV.B   W0L,13C4
+....................         push(s); 
+03F6:  PUSH    13C4
+03F8:  POP     13C8
+03FA:  PUSH    13C6
+03FC:  POP     13CA
+03FE:  CALL    2B6
+....................     } 
+....................     clear_interrupt(INT_EXT2); 
+0402:  BCLR.B  802.4
+.................... } 
+....................  
+0404:  BCLR.B  802.4
+0406:  MOV     #1A,W0
+0408:  REPEAT  #C
+040A:  MOV     [--W15],[W0--]
+040C:  MOV     [--W15],W0
+040E:  POP     54
+0410:  POP     36
+0412:  POP     42
+0414:  RETFIE  
+.................... #INT_EXT3 
+.................... void ext3_isr(void) 
+0416:  PUSH    42
+0418:  PUSH    36
+041A:  PUSH    54
+041C:  MOV     W0,[W15++]
+041E:  MOV     #2,W0
+0420:  REPEAT  #C
+0422:  MOV     [W0++],[W15++]
+.................... { 
+....................     SCANCODE s; 
+....................     s.delay = 0; 
+0424:  CLR     13C6
+....................     output_toggle(keyboard_host_led); 
+0426:  BCLR.B  E02.0
+0428:  BTG.B   E06.0
+....................     if(edge[3] == L_TO_H){ //key press detected 
+042A:  MOV     138C,W4
+042C:  XOR     #40,W4
+042E:  BRA     NZ,446
+....................         edge[3] = H_TO_L; 
+0430:  CLR     138C
+....................         ext_int_edge(3, H_TO_L); 
+0432:  BSET.B  8C2.3
+....................         s.scancode = KEY_D; 
+0434:  MOV.B   #23,W0L
+0436:  MOV.B   W0L,13C4
+....................         push(s); 
+0438:  PUSH    13C4
+043A:  POP     13C8
+043C:  PUSH    13C6
+043E:  POP     13CA
+0440:  CALL    2B6
+....................     } else { //key release detected 
+0444:  BRA     46C
+....................         edge[3] = L_TO_H; 
+0446:  MOV     #40,W4
+0448:  MOV     W4,138C
+....................         ext_int_edge(3, L_TO_H); 
+044A:  BCLR.B  8C2.3
+....................         s.scancode = BREAK_CODE; 
+044C:  MOV.B   #F0,W0L
+044E:  MOV.B   W0L,13C4
+....................         push(s); 
+0450:  PUSH    13C4
+0452:  POP     13C8
+0454:  PUSH    13C6
+0456:  POP     13CA
+0458:  CALL    2B6
+....................         s.scancode = KEY_D; 
+045C:  MOV.B   #23,W0L
+045E:  MOV.B   W0L,13C4
+....................         push(s); 
+0460:  PUSH    13C4
+0462:  POP     13C8
+0464:  PUSH    13C6
+0466:  POP     13CA
+0468:  CALL    2B6
+....................     } 
+....................     clear_interrupt(INT_EXT3); 
+046C:  BCLR.B  803.2
+046E:  BCLR.B  803.2
+0470:  MOV     #1A,W0
+0472:  REPEAT  #C
+0474:  MOV     [--W15],[W0--]
+0476:  MOV     [--W15],W0
+0478:  POP     54
+047A:  POP     36
+047C:  POP     42
+047E:  RETFIE  
+.................... } 
+....................  
+.................... static void update_switches(void) { 
+....................     portInput = input_b(); 
+....................     portChange = lastPortState ^ portInput; 
+....................     lastPortState = portInput; 
+....................     if (bit_test(portChange, 2)) { 
+....................         output_toggle(keyboard_host_led); 
+....................         SCANCODE s; 
+....................         s.delay = 0; 
+....................         if (bit_test(lastPortState, 2)) { //key press detected 
+....................             s.scancode = KEY_A; 
+....................             push(s); 
+....................         } else { 
+....................             s.scancode = BREAK_CODE; 
+....................             push(s); //key release detected 
+....................             s.scancode = KEY_A; 
+....................             push(s); 
+....................         } 
+....................         delay_us(DEBOUNCE_DELAY); 
+....................     }if (bit_test(portChange, 3)) { 
+....................         SCANCODE s; 
+....................         s.delay = 0; 
+....................         output_toggle(keyboard_host_led); 
+....................         if (bit_test(lastPortState, 3)) { 
+....................             s.scancode = KEY_B; 
+....................             push(s); 
+....................         } else { 
+....................             s.scancode = BREAK_CODE; 
+....................             push(s); //key release detected 
+....................             s.scancode = KEY_B; 
+....................             push(s); 
+....................         } 
+....................         delay_us(DEBOUNCE_DELAY); 
+....................     }if (bit_test(portChange, 4)) { 
+....................         SCANCODE s; 
+....................         s.delay = 0; 
+....................         output_toggle(keyboard_host_led); 
+....................         if (bit_test(lastPortState, 4)) { 
+....................             s.scancode = KEY_C; 
+....................             push(s); 
+....................         } else { 
+....................             s.scancode = BREAK_CODE; 
+....................             push(s); //key release detected 
+....................             s.scancode = KEY_C; 
+....................             push(s); 
+....................         } 
+....................         delay_us(DEBOUNCE_DELAY); 
+....................     } 
+.................... } 
+....................  
+.................... /* -------------------------------------------------------------------------- */ 
+
+Configuration Fuses:
+   Word  1L: FFFF   NOWRTB NOBSS NOBS NOWRT NOPROTECT NOWPCFG NOPROTECT_CFG NOAIVT
+          H: 0000  
+   Word  2L: FFFF  
+          H: 0000  
+   Word  3L: FFFF  
+          H: 0000  
+   Word  4L: FFFF  
+          H: 0000  
+   Word  5L: FFFF  
+          H: 0000  
+   Word  6L: 7FFF  
+          H: 0000  
+   Word  7L: FFFA   PR IESO
+          H: 0000  
+   Word  8L: FFFC   EC NOOSCIO PLLWAIT XTGAIN3 XTBST
+          H: 0000  
+   Word  9L: 7FFF   WPOSTS=2147483648 WDTCLK_LPRC WINDIS WDTWIN_25% SLEEP_WPOSTS=2147483648 WDT_SW
+          H: 0000  
+   Word 10L: FFFF   NOMBIST
+          H: 0000  
+   Word 11L: FF5F   ICSP1 NOJTAG DEBUG
+          H: 0000  
+   Word 12L: FFFF  
+          H: 0000  
+   Word 13L: FFFF  
+          H: 0000  
+   Word 14L: FFFF  
+          H: 0000  
+   Word 15L: FFFF  
+          H: 0000  
+   Word 16L: FFFF   DMT_SW
+          H: 0000  
+   Word 17L: FFFF   NOALTI2C1 NOALTI2C2 SMBEN SPI2PINS_PPS
+          H: 0000  
+   Word 18L: FFFF   ALTWREG1=NO ALTWREG2=NO ALTWREG3=NO ALTWREG4=NO
+          H: 0000  
+
+   Some fuses have been forced to be compatible with the ICD debugger.

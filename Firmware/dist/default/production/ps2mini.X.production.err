@@ -1,0 +1,5 @@
+Linking to ps2mini.X.production.hex on 21-Jun-19 at 17:13
+C:\Users\chrsb\MPLABXProjects\ps2mini.X\$linker.c:3:8:  Error#68  Duplicate function  main()
+C:\Users\chrsb\MPLABXProjects\ps2mini.X\$linker.c:3:8:  Error#68  Duplicate function
+      2 Errors,  0 Warnings.
+Build Failed.
