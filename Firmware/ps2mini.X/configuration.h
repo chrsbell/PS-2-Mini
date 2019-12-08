@@ -36,13 +36,6 @@
 #define TIMER_CLOCKP_START 65475// TIMER_CLOCKP_START = 65535-(CLOCK_PERIOD/(2/CPU_CLOCK_SPEED)), triggers every clock period
 #define TIMER_CLOCKP_H_START 65503// TIMER_CLOCKP_H_START = 65535-(CLOCK_PERIOD_HALF/(2/CPU_CLOCK_SPEED)), triggers every half a clock period
 
-/* following is unused */
-#define TIMER_CCP_PRESCALE 64
-#define TIMER1_OVERFLOW_TIME 1 //run the corresponding timer function every 1000 milliseconds
-#define TIMER2_OVERFLOW_TIME 10 //run the corresponding timer function after 10 seconds have passed
-#define TIMER1_PERIOD 62500 //TIMER1_OVERFLOW_TIME / (2 * (1.0/CPU_CLOCK_SPEED) * TIMER_CCP_PRESCALE)
-#define TIMER2_PERIOD 7812500 //TIMER2_OVERFLOW_TIME / (2 * (1.0/CPU_CLOCK_SPEED) * TIMER_CCP_PRESCALE)
-
 #define DEBOUNCE_DELAY 1 //external circuit reduces minimum debounce time necessary to ~1 microsecond
 #define RESET_DELAY 10000 //in microseconds
 #define ACK_DELAY 1000 //in microseconds

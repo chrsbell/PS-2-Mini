@@ -63,10 +63,6 @@ int parity = HIGH;
 BYTE tx_data; //data being transmitted
 BOOLEAN doneTx = TRUE; //whether we are done transmitting
 
-BOOLEAN bootFinished = FALSE;
-
-//int edge[4] = {L_TO_H, L_TO_H, L_TO_H, L_TO_H}; //which edge to detect in external interrupt
-
 //possible states for clock signal while txing
 enum {
     CLK_STATE_OUTPUT_BIT,
@@ -87,10 +83,12 @@ enum {
 int currClkState;
 int currDataState;
 
+//microcontroller port input
 int16 portInput;
 int16 lastPortState = input_b();
 int16 portChange;
 
+//whether each key is down or not
 BOOLEAN movementADown = FALSE;
 BOOLEAN movementBDown = FALSE;
 BOOLEAN movementDashDown = FALSE;
@@ -191,6 +189,7 @@ void main(void) {
             }
             currState = STATE_IDLE;
         }
+        
         update_switches();
 
         if (currState == STATE_IDLE) {//ok to transmit in this state
@@ -445,36 +444,6 @@ void timer1_isr(void) {
 /* -------------------------------------------------------------------------- */
 
 /*
- * this is the 16 bit timer2 overflow interrupt service used for checking the keyboard state
- */
-/*
-#INT_CCP1
-void timer2_isr(void) {
-    SCANCODE s;
-    s.scancode = BREAK_CODE;
-    push(s); //key release detected
-    s.scancode = KEY_B;
-    push(s);
-    disable_interrupts(INT_CCP1);
-}*/
-
-
-/* -------------------------------------------------------------------------- */
-
-/*
- * this is the 32 bit timer3 overflow interrupt service used for disabling keyboard state checks
- */
-
-/*#INT_CCP1
-void timer2_isr(void) {
-    bootFinished = TRUE;
-    currState = STATE_IDLE; //force idle state
-    disable_interrupts(INT_CCP1); //turn off current isr
-}*/
-
-/* -------------------------------------------------------------------------- */
-
-/*
  * this function checks for state changes on the input pins and pushes the corresponding key state change
  */
 
@@ -488,14 +457,6 @@ void update_switches(void) {
         SCANCODE s;
         s.delay = 0;
         if (bit_test(lastPortState, 4)) { //key press detected
-            //other movement key is down, so release it (joystick mode)
-            if (movementBDown) {
-                //send key release code
-                s.scancode = BREAK_CODE;
-                push(s);
-                s.scancode = KEY_B;
-                push(s);
-            }
             //send key press code
             movementADown = TRUE;
             s.scancode = KEY_A;
@@ -507,11 +468,6 @@ void update_switches(void) {
             s.scancode = KEY_A;
             push(s);
             movementADown = FALSE;
-            //the other movement key is still down, so set it as the active one again
-            if (movementBDown) {
-                s.scancode = KEY_B;
-                push(s);
-            }
         }
         //firmware side debounce
         delay_us(DEBOUNCE_DELAY);
@@ -521,12 +477,6 @@ void update_switches(void) {
         SCANCODE s;
         s.delay = 0;
         if (bit_test(lastPortState, 2)) {
-            if (movementADown) {
-                s.scancode = BREAK_CODE;
-                push(s);
-                s.scancode = KEY_A;
-                push(s);
-            }
             movementBDown = TRUE;
             s.scancode = KEY_B;
             push(s);
@@ -536,10 +486,6 @@ void update_switches(void) {
             s.scancode = KEY_B;
             push(s);
             movementBDown = FALSE;
-            if (movementADown) {
-                s.scancode = KEY_A;
-                push(s);
-            }
         }
         delay_us(DEBOUNCE_DELAY);
     }
@@ -548,12 +494,6 @@ void update_switches(void) {
         SCANCODE s;
         s.delay = 0;
         if (bit_test(lastPortState, 3)) {
-            if (movementADown) {
-                s.scancode = BREAK_CODE;
-                push(s);
-                s.scancode = KEY_A;
-                push(s);
-            }
             movementBDown = TRUE;
             s.scancode = KEY_B;
             push(s);
@@ -563,10 +503,6 @@ void update_switches(void) {
             s.scancode = KEY_B;
             push(s);
             movementBDown = FALSE;
-            if (movementADown) {
-                s.scancode = KEY_A;
-                push(s);
-            }
         }
         delay_us(DEBOUNCE_DELAY);
     }
