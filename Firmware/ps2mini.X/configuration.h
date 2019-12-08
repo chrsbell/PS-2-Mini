@@ -36,6 +36,7 @@
 #define TIMER_CLOCKP_START 65475// TIMER_CLOCKP_START = 65535-(CLOCK_PERIOD/(2/CPU_CLOCK_SPEED)), triggers every clock period
 #define TIMER_CLOCKP_H_START 65503// TIMER_CLOCKP_H_START = 65535-(CLOCK_PERIOD_HALF/(2/CPU_CLOCK_SPEED)), triggers every half a clock period
 
+/* following is unused */
 #define TIMER_CCP_PRESCALE 64
 #define TIMER1_OVERFLOW_TIME 1 //run the corresponding timer function every 1000 milliseconds
 #define TIMER2_OVERFLOW_TIME 10 //run the corresponding timer function after 10 seconds have passed
