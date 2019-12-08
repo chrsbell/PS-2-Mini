@@ -26,18 +26,13 @@
 
 //device configuration and fuses
 
-#include <33CK64MP105.h>
-//#device ICD=TRUE
-//#device NESTED_INTERRUPTS=TRUE
-#pin_select INT1 = PIN_B3//KEY_SWITCH2
-#pin_select INT2 = PIN_B4//KEY_SWITCH3
-#pin_select INT3 = PIN_B5//KEY_SWITCH4
-#fuses EC,NOWDT,NOPROTECT,PR
-#use delay(clock=100MHZ)
+#include <33CK32MP102.h>
+//#pin_select INT1 = PIN_B3//KEY_SWITCH2
+//#pin_select INT2 = PIN_B4//KEY_SWITCH3
+//#pin_select INT3 = PIN_B5//KEY_SWITCH4
+#fuses NOWDT,FRC//HS,PR,NOPROTECT,EC
+#use delay(internal=8MHZ) //external clock not implemented, use internal one for now
 #use fast_io(B) //manually control i/o direction register
-//#pin_select U1TX=PIN_B2
-//#pin_select U1RX=PIN_B3
-//#use rs232(UART1, baud=9600, errors, bits=8, parity=N, stop=1, stream=COM4)
 
 /* -------------------------------------------------------------------------- */
 

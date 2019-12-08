@@ -66,11 +66,6 @@ enum {		/* keyboard device scan codes */
         KEY_D               = 0x23,
 };
 
-typedef struct KEY {
-  BYTE scancode;
-  BOOLEAN isRelease;
-} KEY;
-
 typedef struct SCANCODE{
     BYTE scancode;
     int delay;
@@ -85,7 +80,5 @@ BYTE execute_host_command(void);
 BYTE receive_from_host(void);
 
 void send_to_host(SCANCODE packet);
-
-//void send_key(KEY* key);
 
 /* -------------------------------------------------------------------------- */
