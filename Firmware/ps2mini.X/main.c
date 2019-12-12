@@ -81,8 +81,6 @@ void main(void) {
     initialize();
 
     BYTE command; //current host command
-    SCANCODE* packet = 0; //current packet being transmitted
-    BOOLEAN packetSent = TRUE;
 
     while (1) { //receive commands if there are any, send scancodes if there are any
 
@@ -125,7 +123,9 @@ void main(void) {
             currState = STATE_IDLE;
         }
         
-        update_switches();
+        if(currState == STATE_IDLE){
+            update_switches();
+        }
         
     }
 }
@@ -327,7 +327,7 @@ void update_switches(void) {
             s.scancode = BREAK_CODE;
             send_to_host(s);
             s.scancode = KEY_B;
-            push(s);
+            send_to_host(s);
         }
         delay_us(DEBOUNCE_DELAY);
     }

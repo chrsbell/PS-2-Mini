@@ -31,8 +31,8 @@
 
 #define CPU_CLOCK_SPEED 8000000//100000000 //in hz
 
-#define CLOCK_PERIOD 10 //in microseconds, typical PS/2 clock period is ~30-50 microseconds
-#define CLOCK_PERIOD_HALF 5
+#define CLOCK_PERIOD 15 //in microseconds, typical PS/2 clock period is ~30-50 microseconds
+#define CLOCK_PERIOD_HALF 8
 
 #define DEBOUNCE_DELAY 1 //external circuit reduces minimum debounce time necessary to ~1 microsecond
 #define RESET_DELAY 10000 //in microseconds
