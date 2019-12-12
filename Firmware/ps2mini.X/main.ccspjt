@@ -14,7 +14,7 @@ Type=4
 forcecoff=0
 
 [ProjectLog]
-Days=3
+Days=4
 D1=17-07-2019
 D1_L=2
 D1_L1=[8837]Project Opened.
@@ -25,6 +25,9 @@ D2_L1=[46652]Project Opened.
 D3=07-12-2019
 D3_L=1
 D3_L1=[41117]Project Closed.
+D4=08-12-2019
+D4_L=1
+D4_L1=[77602]Project Opened.
 [build\default\production\main.c]
 Type=4
 [build\default\debug\main.c]

@@ -31,16 +31,12 @@
 
 #define CPU_CLOCK_SPEED 8000000//100000000 //in hz
 
-#define CLOCK_PERIOD 15 //in microseconds, typical PS/2 clock period is ~30-50 microseconds
-#define CLOCK_PERIOD_HALF 8
-#define TIMER_CLOCKP_START 65475// TIMER_CLOCKP_START = 65535-(CLOCK_PERIOD/(2/CPU_CLOCK_SPEED)), triggers every clock period
-#define TIMER_CLOCKP_H_START 65503// TIMER_CLOCKP_H_START = 65535-(CLOCK_PERIOD_HALF/(2/CPU_CLOCK_SPEED)), triggers every half a clock period
+#define CLOCK_PERIOD 10 //in microseconds, typical PS/2 clock period is ~30-50 microseconds
+#define CLOCK_PERIOD_HALF 5
 
 #define DEBOUNCE_DELAY 1 //external circuit reduces minimum debounce time necessary to ~1 microsecond
 #define RESET_DELAY 10000 //in microseconds
 #define ACK_DELAY 1000 //in microseconds
-
-#define QUEUE_SIZE 50 //max number of scancodes to queue
 
 #define KEY_SWITCH1 PIN_B2
 #define KEY_SWITCH2 PIN_B3 

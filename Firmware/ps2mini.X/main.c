@@ -36,12 +36,6 @@
 
 void initialize(void);
 
-void initialize_interrupts(void);
-
-void push(SCANCODE data);
-
-SCANCODE* pop();
-
 void update_switches(void);
 
 /* -------------------------------------------------------------------------- */
@@ -55,70 +49,12 @@ enum { //possible states of keyboard
 
 int currState = STATE_IDLE; //the current state
 
-SCANCODE queue[QUEUE_SIZE]; //queue of scancodes to send
-int front = 0, back = 0;
-
-int bit_index = 0;
-int parity = HIGH;
-BYTE tx_data; //data being transmitted
-BOOLEAN doneTx = TRUE; //whether we are done transmitting
-
-//possible states for clock signal while txing
-enum {
-    CLK_STATE_OUTPUT_BIT,
-    CLK_STATE_LOW,
-    CLK_STATE_HIGH
-};
-
-//possible states for data signal while txing
-enum {
-    SEND_START_BIT,
-    SEND_DATA_BIT,
-    SEND_PARITY_BIT,
-    SEND_STOP_BIT,
-    SEND_FINISH_HIGH,
-    SEND_FINISH_COMPLETE
-};
-
-int currClkState;
-int currDataState;
-
 //microcontroller port input
 int16 portInput;
 int16 lastPortState = input_b();
 int16 portChange;
 
-//whether each key is down or not
-BOOLEAN movementADown = FALSE;
-BOOLEAN movementBDown = FALSE;
-BOOLEAN movementDashDown = FALSE;
-
 /* -------------------------------------------------------------------------- */
-
-/*
- * simple circular queue push
- */
-
-void push(SCANCODE data) {
-    back = (back + 1) % QUEUE_SIZE;
-    queue[back] = data;
-}
-
-/* -------------------------------------------------------------------------- */
-
-/*
- * simple circular queue pop
- */
-
-SCANCODE* pop() {
-    if (front != back) {
-        front = (front + 1) % QUEUE_SIZE;
-        return &queue[front];
-    }
-    return 0; //there is no scancode
-}
-
-/* ------------------------------------------------------------------------ */
 
 /*
  * main initialization routine
@@ -132,8 +68,6 @@ void initialize(void) {
     set_pulldown(TRUE, KEY_SWITCH2);
     set_pulldown(TRUE, KEY_SWITCH3);
     set_pulldown(TRUE, KEY_SWITCH4);
-
-    initialize_interrupts();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -143,12 +77,13 @@ void initialize(void) {
  */
 
 void main(void) {
-    
+
     initialize();
-    
+
     BYTE command; //current host command
-    SCANCODE* packet; //current packet being transmitted
-    
+    SCANCODE* packet = 0; //current packet being transmitted
+    BOOLEAN packetSent = TRUE;
+
     while (1) { //receive commands if there are any, send scancodes if there are any
 
         if (currState != STATE_TX) {
@@ -170,7 +105,7 @@ void main(void) {
                     SCANCODE s;
                     s.scancode = KEYBOARD_BAT;
                     s.delay = RESET_DELAY; //delay before resetting
-                    push(s);
+                    send_to_host(s);
                     break;
                 case KEYBOARD_DISABLE:
                     break;
@@ -191,18 +126,7 @@ void main(void) {
         }
         
         update_switches();
-
-        if (currState == STATE_IDLE) {//ok to transmit in this state
-            packet = pop();
-            if (packet) {
-                send_to_host(*packet);
-            }
-        }
-        if (currState == STATE_TX) {
-            if (doneTx) {
-                currState = STATE_IDLE; //immediately go back to sending scancodes
-            }
-        }
+        
     }
 }
 
@@ -301,7 +225,7 @@ BYTE execute_host_command() {
     commandcode = receive_from_host(); //get a command code from host
     s.scancode = KEYBOARD_ACK;
     s.delay = ACK_DELAY;
-    push(s);
+    send_to_host(s);
     while (device_communication_inhibited()); //wait for host to release clock/data lines
     return commandcode;
 }
@@ -313,132 +237,54 @@ BYTE execute_host_command() {
  */
 
 void send_to_host(SCANCODE packet) {
- 
+    
     while(device_communication_inhibited()); //wait for the ok to send
+    
+    output_drive(KEYBOARD_CLOCK_PIN); //set clock/data to output mode
+    output_drive(KEYBOARD_DATA_PIN);
+    
     if (packet.delay > CLOCK_PERIOD){
         delay_us(packet.delay); //custom delay
     } else {
         delay_us(CLOCK_PERIOD); //make sure clock line high for minimum duration before sending data
     }
-    tx_data = packet.scancode;
-    doneTx = FALSE;
-    bit_index = 0;
-    parity = HIGH;
-    set_timer1(65535); //start sending immediately
-    output_drive(KEYBOARD_CLOCK_PIN); //set clock/data to output mode
-    output_drive(KEYBOARD_DATA_PIN);
-    currDataState = SEND_START_BIT; //reset data line state machine
-    currClkState = CLK_STATE_OUTPUT_BIT; //reset clock line state machine
-    currState = STATE_TX;
-    enable_interrupts(INT_TIMER1); //turn on tx handler
-}
-
-/******************************************************************************/
-/*																			  */
-/*				interrupt management and handling routines					  */
-/*																			  */
-/******************************************************************************/
-
-/* -------------------------------------------------------------------------- */
-
-/*
- * this routine initializes the interrupts
- */
-
-void initialize_interrupts(void) {
-    //key press/release interrupts for each switch
-    /*ext_int_edge(0, L_TO_H);
-    ext_int_edge(1, L_TO_H);
-    ext_int_edge(2, L_TO_H);
-    ext_int_edge(3, L_TO_H);
-
-    enable_interrupts(INT_EXT0);
-    enable_interrupts(INT_EXT1);
-    enable_interrupts(INT_EXT2);
-    enable_interrupts(INT_EXT3);*/
- 
-    setup_timer1(TMR_INTERNAL | TMR_DIV_BY_1); //prescalar 1
-    //setup_timer2(TMR_INTERNAL | TMR_DIV_BY_1); //prescalar 1
-    /*setup_ccp1(CCP_TIMER | CCP_DIV_BY_1); //use ccp1 as timer2
-    setup_ccp1(CCP_COMPARE_SET_ON_MATCH | CCP_TIMER_32_BIT | CCP_DIV_BY_64); //use ccp1 as timer2
     
-    set_ccp1_compare_time(TIMER1_PERIOD);
-    */
-    //enable_interrupts(INT_CCP1);
-    //enable_interrupts(INT_CCP2);
-    enable_interrupts(GLOBAL);
-}
+    int i;
+	int ndata = 0;
+	int parity = HIGH;
+	int data[11]; // one start bit, 8 data bits, one parity bit, one stop bit
+	int a_bit;
+    
+    // set start bit
+	data[ndata++] = LOW;
 
-/* -------------------------------------------------------------------------- */
+	// set data bits and compute parity bit
+	for (i = 0; i < 8; i++) {
+		a_bit = bit_test(packet.scancode, i);
+		parity ^= a_bit;
+		data[ndata++] = a_bit;
+	}
+    
+	// set parity bit
+	data[ndata++] = parity;
 
-/*
- * this is the 16 bit timer1 overflow interrupt service used for txing data
- * note - the signals generated here may appear distorted if using debug mode
- */
-
-#INT_TIMER1
-void timer1_isr(void) {
-
-    switch (currClkState) {
-
-        case CLK_STATE_OUTPUT_BIT:
-            //which data bit are we sending?
-            switch (currDataState) {
-                case SEND_START_BIT:
-                    output_low(KEYBOARD_DATA_PIN);
-                    currDataState++;
-                    break;
-                case SEND_DATA_BIT:
-                    int currBit = bit_test(tx_data, bit_index);
-                    output_bit(KEYBOARD_DATA_PIN, currBit);
-                    //calculate parity
-                    parity ^= currBit;
-                    bit_index++;
-                    if (bit_index == 8) {
-                        currDataState++;
-                    }
-                    break;
-                case SEND_PARITY_BIT:
-                    output_bit(KEYBOARD_DATA_PIN, parity);
-                    currDataState++;
-                    break;
-                case SEND_STOP_BIT:
-                    output_high(KEYBOARD_DATA_PIN);
-                    currDataState++;
-                    break;
-            }
-            //send next data bit in middle of next clock pulse
-            set_timer1(TIMER_CLOCKP_H_START);
-            break;
-
-        case CLK_STATE_LOW:
-
-            output_low(KEYBOARD_CLOCK_PIN);
-            set_timer1(TIMER_CLOCKP_START);
-            break;
-
-        case CLK_STATE_HIGH:
-
-            if (currDataState == SEND_FINISH_HIGH) {
-                output_high(KEYBOARD_CLOCK_PIN); //set clock high one last time to show we are done
-                set_timer1(TIMER_CLOCKP_START);
-                currDataState++;
-                return;
-            } else if (currDataState == SEND_FINISH_COMPLETE) { //we are done transmitting the packet
-                output_float(KEYBOARD_DATA_PIN); //set data to high impedance
-                output_float(KEYBOARD_CLOCK_PIN); //set clock to high impedance
-                disable_interrupts(INT_TIMER1); //turn off tx handler
-                doneTx = TRUE;
-                return;
-            } else {
-                output_high(KEYBOARD_CLOCK_PIN);
-                set_timer1(TIMER_CLOCKP_H_START);
-            }
-            currClkState = -1; //reset clock line state machine
-            break;
-
-    }
-    currClkState++;
+	// set stop bit
+	data[ndata++] = HIGH;
+    
+    for (i = 0; i < ndata; i++) {
+		output_bit(KEYBOARD_DATA_PIN, data[i]);
+		delay_us(CLOCK_PERIOD_HALF);
+		output_low(KEYBOARD_CLOCK_PIN);		// generate clock pulse
+		delay_us(CLOCK_PERIOD);
+		output_high(KEYBOARD_CLOCK_PIN);		// generate clock pulse
+		delay_us(CLOCK_PERIOD_HALF);
+	}
+    
+    set_pullup(TRUE, KEYBOARD_CLOCK_PIN); //re-enable pullups
+    set_pullup(TRUE, KEYBOARD_DATA_PIN);
+    
+    output_float(KEYBOARD_DATA_PIN);
+    output_float(KEYBOARD_CLOCK_PIN);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -458,16 +304,14 @@ void update_switches(void) {
         s.delay = 0;
         if (bit_test(lastPortState, 4)) { //key press detected
             //send key press code
-            movementADown = TRUE;
             s.scancode = KEY_A;
-            push(s);
+            send_to_host(s);
         } else {
             //send key release code
             s.scancode = BREAK_CODE;
-            push(s);
+            send_to_host(s);
             s.scancode = KEY_A;
-            push(s);
-            movementADown = FALSE;
+            send_to_host(s);
         }
         //firmware side debounce
         delay_us(DEBOUNCE_DELAY);
@@ -477,15 +321,13 @@ void update_switches(void) {
         SCANCODE s;
         s.delay = 0;
         if (bit_test(lastPortState, 2)) {
-            movementBDown = TRUE;
             s.scancode = KEY_B;
-            push(s);
+            send_to_host(s);
         } else {
             s.scancode = BREAK_CODE;
-            push(s);
+            send_to_host(s);
             s.scancode = KEY_B;
             push(s);
-            movementBDown = FALSE;
         }
         delay_us(DEBOUNCE_DELAY);
     }
@@ -494,15 +336,13 @@ void update_switches(void) {
         SCANCODE s;
         s.delay = 0;
         if (bit_test(lastPortState, 3)) {
-            movementBDown = TRUE;
-            s.scancode = KEY_B;
-            push(s);
+            s.scancode = KEY_C;
+            send_to_host(s);
         } else {
             s.scancode = BREAK_CODE;
-            push(s);
-            s.scancode = KEY_B;
-            push(s);
-            movementBDown = FALSE;
+            send_to_host(s);
+            s.scancode = KEY_C;
+            send_to_host(s);
         }
         delay_us(DEBOUNCE_DELAY);
     }
@@ -511,15 +351,13 @@ void update_switches(void) {
         SCANCODE s;
         s.delay = 0;
         if (bit_test(lastPortState, 5)) {
-            movementDashDown = TRUE;
             s.scancode = KEY_D;
-            push(s);
+            send_to_host(s);
         } else {
             s.scancode = BREAK_CODE;
-            push(s);
+            send_to_host(s);
             s.scancode = KEY_D;
-            push(s);
-            movementDashDown = FALSE;
+            send_to_host(s);
         }
         delay_us(DEBOUNCE_DELAY);
     }
