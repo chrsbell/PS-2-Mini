@@ -1,5 +1,5 @@
 # PS-2-Mini
-Low latency PS/2 keyboard for osu!
+Low latency PS/2 keyboard for osu!, inspired and heavily influenced by David Bern's PS/2 Keyer http://www.arrl.org/files/file/QEX_Next_Issue/May-Jun_2010/Bern.pdf
 
 Uses debounce circuit to reduce software debounce time to ~1 microsecond
 
